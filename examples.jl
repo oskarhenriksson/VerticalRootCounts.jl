@@ -176,3 +176,18 @@ rn = @reaction_network begin
 end;
 
 @time sd = steady_state_degree(rn; verbose=true)
+
+# Example with more isolated zeros than the generic root count
+C = matrix(QQ, [
+     1  -12   58  -144  193  -132    1  -12   58  -144  193  -132  0   0   0   72  0
+     0    0    0     0    0     0    0    0    0     0    0     1  -1   1   0  -1  0
+     0    0    0     0    0     0    0    0    0     0    0     0   0   0    2  -2   0
+])
+
+M = matrix(ZZ, [
+    6  5  4  3  2  1  0  0  0  0  0  0  0  0  0 0  0
+    0  0  0  0  0  0  6  5  4  3  2  1  1  0  0 0  0
+    0  0  0  0  0  0  0  0  0  0  0  0  0  1  1 0  0
+])
+
+generic_root_count(C, M)
