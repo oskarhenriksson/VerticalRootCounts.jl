@@ -2,7 +2,7 @@ export minimal_presentation,
     augmented_vertical_system,
     has_nondegenerate_zero
 
-function augmented_vertical_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix)
+function augmented_vertical_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
 
     KB, k, b = rational_function_field(QQ, "k"=>1:ncols(M), "b"=>1:nrows(L))
     R, x = polynomial_ring(KB, "x"=>1:nrows(M))
