@@ -175,6 +175,9 @@ rn = @reaction_network begin
   k31, X11         --> X10
 end;
 
+C, M, L = steady_state_system(rn)
+F = augmented_vertical_system(C, M, L)
+mixed_volume(F)
 @time sd = steady_state_degree(rn; verbose=true)
 
 # Example with more isolated zeros than the generic root count
