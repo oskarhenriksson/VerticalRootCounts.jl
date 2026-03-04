@@ -9,7 +9,7 @@ The output is a vector of stable intersection points and a vector with the multi
 
 """
 function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace, TropB::TropicalVariety; 
-    perturbation::Union{Nothing, Vector{Int}} = nothing, with_multiplicities::Bool = true)
+    perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
 
     bergmanRays, bergmanLineality = rays_modulo_lineality(TropL)
     bergmanRays = matrix(QQ, bergmanRays)
@@ -19,11 +19,6 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
     linearSpaceBasis = matrix(QQ, linearSpaceBasis)
 
     @req length(minimalFaces) == 1 "Several minimal faces found in TropL"
-    #perturbation = Vector(minimalFaces[1])
-    #pick a random perturbation
-    if isnothing(perturbation)
-        perturbation = [-rand(-1000:1000) for i in 1:length(Vector(minimalFaces[1]))]
-    end
 
     # compute the projection matrix onto the orthogonal complement of the euclidean linear space
     basisOfComplementTransposed = kernel(linearSpaceBasis, side=:right)
