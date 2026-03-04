@@ -50,8 +50,9 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
         if can_solve
             firstZero = findfirst(isequal(0), solution)
             if (firstZero != nothing) && (firstZero[2] <= nRaysPerCone)
-                # random direction lies on the boundary of the cone
-                error("random direction not generic")
+                # random direction not generic, lies on the boundary of the cone
+                # rerun algorithm with a different random direction
+                return tropical_stable_intersection_linear_binomial(TropL, TropB; with_multiplicities = with_multiplicities)
             end
             firstNegative = findfirst(a -> (a < 0), solution)
             if (firstNegative == nothing) || (firstNegative[2] > nRaysPerCone)
