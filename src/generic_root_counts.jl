@@ -100,20 +100,8 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     verbose && @info "Tropical binomial variety computed"
  
     # Compute the stable intersection
-    generic_perturbation = false
-    while !generic_perturbation
-        try
-            pts, mults = tropical_stable_intersection_linear_binomial(TropL, TropB)
-            generic_perturbation = true
-            return sum(mults)
-        catch err
-            if isa(err, ErrorException) && err.msg == "random direction not generic"
-                continue
-            else
-                error(err)
-            end
-        end
-    end
+    _, mults = tropical_stable_intersection_linear_binomial(TropL, TropB)
+    return sum(mults)
 end
 
 
