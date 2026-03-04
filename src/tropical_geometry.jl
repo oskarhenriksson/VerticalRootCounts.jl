@@ -29,8 +29,6 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
     projectedRays = bergmanRays * projectionMatrix
     projectedLineality = bergmanLineality * projectionMatrix
 
-    #todo: add the bergmanLineality to the linearSpaceBasis
-
     # make it consistent whether projectionPerturbation and perturbation are rows/colums
     projectedPerturbation = matrix(QQ, [perturbation]) * projectionMatrix
     stableIntersectionPoints = Vector{QQFieldElem}[]
