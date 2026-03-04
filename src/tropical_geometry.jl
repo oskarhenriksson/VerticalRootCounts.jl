@@ -85,6 +85,5 @@ function tropical_intersection_multiplicity(B1, B2)
     B1 = saturate(matrix(ZZ, Polymake.common.primitive(B1)))
     B2 = saturate(matrix(ZZ, Polymake.common.primitive(B2)))
 
-    snfB12 = snf(vcat(B1, B2))
-    return abs(prod([snfB12[i, i] for i in 1:ncols(snfB12)])) |> Int
+    return abs(prod(elementary_divisors(vcat(B1,B2)))) |> Int
 end
