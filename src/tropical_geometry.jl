@@ -13,17 +13,16 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
 
     bergmanRays, bergmanLineality = rays_modulo_lineality(TropL)
     bergmanRays = matrix(QQ, bergmanRays)
-    bergmanLineality = matrix(QQ, bergmanLineality)
 
-    minimalFaces, linearSpaceBasis = minimal_faces(TropB)
-    linearSpaceBasis = matrix(QQ, linearSpaceBasis)
-
+    minimalFaces, binomialLineality = minimal_faces(TropB)
     @req length(minimalFaces) == 1 "Several minimal faces found in TropL"
     #perturbation = Vector(minimalFaces[1])
     #pick a random perturbation
     if isnothing(perturbation)
         perturbation = [-rand(-1000:1000) for i in 1:length(Vector(minimalFaces[1]))]
     end
+
+    linearSpaceBasis = vcat(matrix(QQ, binomialLineality), matrix(QQ, bergmanLineality))
 
     # compute the projection matrix onto the orthogonal complement of the euclidean linear space
     basisOfComplementTransposed = kernel(linearSpaceBasis, side=:right)
@@ -32,9 +31,6 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
 
     # project the rays of the Bergman fan
     projectedRays = bergmanRays * projectionMatrix
-    projectedLineality = bergmanLineality * projectionMatrix
-
-    #todo: add the bergmanLineality to the linearSpaceBasis
 
     # make it consistent whether projectionPerturbation and perturbation are rows/colums
     projectedPerturbation = matrix(QQ, [perturbation]) * projectionMatrix
@@ -50,8 +46,7 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
 
         # test whether projected direction lies in projected cone
         # warning: be careful about the sign of the perturbation
-        can_solve, solution = can_solve_with_solution(vcat(projectedRaysOfCone, projectedLineality),
-            projectedPerturbation; side=:left)
+        can_solve, solution = can_solve_with_solution(projectedRaysOfCone, projectedPerturbation; side=:left)
         if can_solve
             firstZero = findfirst(isequal(0), solution)
             if (firstZero != nothing) && (firstZero[2] <= nRaysPerCone)
