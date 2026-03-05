@@ -167,7 +167,7 @@ function generic_degree(C::QQMatrix, M::ZZMatrix)
     L_generic = matrix(QQ, rand(Int16, n-s, nrows(M)))
 
     # Check that the matroid is uniform (all Plücker coordinates are nonzero)
-    all(is_nonzero, minors(L_generic, nrows(L_generic)))
+    all(!is_zero, minors(L_generic, nrows(L_generic)))
 
     # Compute the generic root count
     return generic_root_count(C, M, L_generic)
