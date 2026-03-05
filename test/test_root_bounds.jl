@@ -112,6 +112,9 @@ end
     @test steady_state_degree(rn) == 3
 
     C, M, L = steady_state_system(rn)
+
+    @test generic_degree(C, M) == 4
+
     b = [68, 52, 99]
     k = [84, 46, 30, 13, 23, 68]
     h = [79, 26, 89, 92]

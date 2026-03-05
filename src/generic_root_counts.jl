@@ -1,5 +1,6 @@
 export steady_state_degree,
-    generic_root_count
+    generic_root_count,
+    generic_degree
     
 @doc raw"""
 generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
@@ -126,3 +127,37 @@ julia> steady_state_degree(rn)
 """
 steady_state_degree(rn::ReactionSystem; kwargs...) = 
     generic_root_count(steady_state_system(rn)...; kwargs...)
+
+
+
+
+"""
+    generic_degree(C::QQMatrix, M::ZZMatrix)
+
+Compute the generic degree of the ideal of a vertical system.
+
+In accordance with Bézout's theorem, we compute this by intersecting with a 
+generic affine space of complementary dimension.
+
+"""
+function generic_degree(C::QQMatrix, M::ZZMatrix) 
+
+    n = nrows(M) #number of variables
+    m = ncols(M) #number of parameters
+    s = rank(C) #rank
+
+    # Check for nondegeneracy
+    if !has_nondegenerate_zero(C, M)
+        return 0
+    end
+
+    # Augment the system to a square system by an L with full support
+    L_generic = matrix(QQ, rand(Int16, n-s, nrows(M)))
+
+    # Check that the matroid is uniform (all Plücker coordinates are nonzero)
+    all(!is_zero, minors(L_generic, nrows(L_generic)))
+
+    # Compute the generic root count
+    return generic_root_count(C, M, L_generic)
+
+end
