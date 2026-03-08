@@ -60,20 +60,12 @@ function toric_root_bound(A::ZZMatrix, L::QQMatrix;
     verbose && @info "Tropicalization of toric variety computed"
    
     # Stable intersection
-    generic_perturbation = false
-    while !generic_perturbation
-        try
-            pts, mults = tropical_stable_intersection_linear_binomial(TropL, Trop_toric)
-            generic_perturbation = true
-            return sum(mults)
-        catch err
-            if isa(err, ErrorException) && err.msg == "random direction not generic"
-                continue
-            else
-                error(err)
-            end
-        end
+    rootCountComputed = false
+    mults = Int[]
+    while !rootCountComputed
+        _, rootCountComputed, _, mults = perturb_and_intersect_if_transversal(TropL, Trop_toric)
     end
+    return sum(mults)
 end
 
 
@@ -105,7 +97,8 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         verbose && @info "Tropicalization of toric variety computed"
     end
 
-    pts, _ = tropical_stable_intersection_linear_binomial(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    @req isTransversal "input perturbation not generic"
 
     # Count how many of the tropical points that are positive
     Lb_spec = hcat(L, -matrix(QQ.(b_spec)))

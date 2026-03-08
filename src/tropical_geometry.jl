@@ -1,14 +1,16 @@
 
 @doc raw""""
-    tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace,TropB::TropicalVariety)
+    perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety; perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
 
-Specialized stable intersection function for a tropical linear space 
-and a linear space (encoded as a tropicalization of a binomial variety).
+Perturb `TropB` by `perturbation` and intersect with `TropL` is the intersection is transversal.  Return four things:
+- the vector `perturbation`
+- a Boolean `true` or `false` depending on whether `TropB + perturbation` and `TropL` intersect transversally
+- a vector that contains the intersection points if the intersection is transversal
+- a vector that contains the multiplicities of the intersection points if the intersection is transversal and `with_multiplicities` is `true`.
 
-The output is a vector of stable intersection points and a vector with the multiplicities of the points.
-
+Assumes that `TropL` is a polyhedral fan and that `TropB` is the tropicalization of a binomial variety, i.e., a regular linear space.
 """
-function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace, TropB::TropicalVariety; 
+function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety;
     perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
 
     bergmanRays, bergmanLineality = rays_modulo_lineality(TropL)
@@ -50,7 +52,7 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
             if (firstZero != nothing) && (firstZero[2] <= nRaysPerCone)
                 # random direction not generic, lies on the boundary of the cone
                 # rerun algorithm with a different random direction
-                return tropical_stable_intersection_linear_binomial(TropL, TropB; with_multiplicities = with_multiplicities)
+                return perturbation, false, stableIntersectionPoints, stableIntersectionMults
             end
             firstNegative = findfirst(a -> (a < 0), solution)
             if (firstNegative == nothing) || (firstNegative[2] > nRaysPerCone)
@@ -67,7 +69,7 @@ function tropical_stable_intersection_linear_binomial(TropL::TropicalLinearSpace
         end
     end
  
-    return stableIntersectionPoints, stableIntersectionMults
+    return perturbation, true, stableIntersectionPoints, stableIntersectionMults
 end
 
 

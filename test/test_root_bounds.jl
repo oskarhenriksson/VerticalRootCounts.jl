@@ -158,7 +158,7 @@ end
 
 @testset "Triangle network" begin
 
-    Random.seed!(1234)
+    Oscar.set_seed!(13371337)
 
     rn = Catalyst.@reaction_network begin
         k1, 3*X1 + 2*X2 --> 6*X1
