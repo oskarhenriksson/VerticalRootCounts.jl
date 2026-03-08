@@ -97,7 +97,7 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         verbose && @info "Tropicalization of toric variety computed"
     end
 
-    _, isTransversal, pts, _ = perturb_and_intersect(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
     @req isTransversal "input perturbation not generic"
 
     # Count how many of the tropical points that are positive
