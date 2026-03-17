@@ -63,7 +63,9 @@ function toric_root_bound(A::ZZMatrix, L::QQMatrix;
     rootCountComputed = false
     mults = Int[]
     while !rootCountComputed
-        _, rootCountComputed, _, mults = perturb_and_intersect_if_transversal(TropL, Trop_toric)
+        result = perturb_and_intersect_if_transversal(TropL, Trop_toric)
+        rootCountComputed = result.is_transversal
+        mults = result.multiplicities
     end
     return sum(mults)
 end
@@ -97,16 +99,20 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         verbose && @info "Tropicalization of toric variety computed"
     end
 
-    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    result = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
     
-    if !isTransversal 
+    if !result.is_transversal 
         throw(NongenericDirectionError("Input perturbation not generic"))
     end
 
     # Count how many of the tropical points that are positive
     Lb_spec = hcat(L, -matrix(QQ.(b_spec)))
     Ilin = ideal(R, Lb_spec*vcat(x,z))
-    return count(Oscar.is_initial_positive(Ilin, tropical_semiring_map(QQ), lcm(denominator.(p)) .* p) for p in pts)
+    normalized_points = (lcm(denominator.(p)) .* p for p in result.points)
+    return count(
+        Oscar.is_initial_positive(Ilin, tropical_semiring_map(QQ), p) 
+        for p in normalized_points
+    )
 end
 
 

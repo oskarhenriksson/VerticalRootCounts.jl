@@ -107,16 +107,21 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
         verbose && @info "Tropical linear space computed"
     end
 
-    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, TropB,
-                                                                   perturbation=vcat(zeros(Int, n+1), h), with_multiplicities=false)
-
-    if !isTransversal 
+    result = perturb_and_intersect_if_transversal(TropL, TropB,
+                                perturbation=vcat(zeros(Int, n+1), h), with_multiplicities=false)
+    if !result.is_transversal 
         throw(NongenericDirectionError("The shift of the tropicalized binomial variety not generic; try a different h vector"))
     end
 
     # Count how many of the tropical points that are positive
     Ilin = ideal(R, C_tilde_spec*y) + ideal(R, Lb_spec*vcat(x,z))
-    return count(Oscar.is_initial_positive(Ilin, nu, lcm(denominator.(p)) .* p) for p in pts)
+
+    normalized_points = (lcm(denominator.(p)) .* p for p in result.points)
+
+    return count(
+        Oscar.is_initial_positive(Ilin, nu, p)
+        for p in normalized_points
+    )
 end
 
 

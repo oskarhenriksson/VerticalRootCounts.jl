@@ -104,7 +104,9 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     rootCountComputed = false
     mults = Int[]
     while !rootCountComputed
-        _, rootCountComputed, _, mults = perturb_and_intersect_if_transversal(TropL, TropB)
+        result = perturb_and_intersect_if_transversal(TropL, TropB)
+        rootCountComputed = result.is_transversal
+        mults = result.multiplicities
     end
     return sum(mults)
 end

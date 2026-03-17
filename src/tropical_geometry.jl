@@ -71,7 +71,12 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
         end
     end
  
-    return perturbation, true, stableIntersectionPoints, stableIntersectionMults
+    return (
+        perturbation = perturbation,
+        is_transversal = true,
+        points = stableIntersectionPoints,
+        multiplicities = stableIntersectionMults
+    )
 end
 
 
