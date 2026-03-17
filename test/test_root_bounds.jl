@@ -28,6 +28,10 @@ using VerticalRootCounts
     h = [37,97,18]
     @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 3
     
+    @test_throws VerticalRootCounts.NongenericDirectionError (
+        lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, [0, 0, 0])
+    )
+
     bound, _, _, _ = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
     @test bound == 3
     
