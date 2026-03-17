@@ -169,7 +169,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
             end
               
             # Update the current best count
-            if new_count > best_count
+            if new_count > best_count || isnothing(best_b) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
                 best_h = h

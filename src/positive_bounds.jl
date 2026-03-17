@@ -131,15 +131,15 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
     s = rank(C) #rank
     d = n-s #corank
 
+    C_tilde, M_tilde = minimal_presentation(C, M)
+    r = ncols(M_tilde)
+
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(C, M, L)
-        return 0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, d)
+        return 0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r)
     end
 
     @req nrows(L) == d "L must have the same number of rows as the corank of C"
-
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde)
 
     # Tropicalize the binomial part of the modified system
     K, t = rational_function_field(QQ,"t")
@@ -197,7 +197,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
             end
 
             # Update the current best count
-            if new_count > best_count
+            if new_count > best_count || isnothing(best_b) || isnothing(best_k) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
                 best_k = k_spec
