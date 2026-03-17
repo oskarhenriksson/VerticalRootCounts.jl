@@ -113,6 +113,7 @@ end
 function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatrix,; 
     num_b_attempts::Int=5, 
     num_h_attempts_per_b::Int=10, 
+    max_entry_size::Int=1000,
     show_progress::Bool=true,
     verbose::Bool=false
 )
@@ -147,7 +148,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
         B, b = rational_function_field(QQ, "b"=>1:d)
         Lb = hcat(B.(L), -matrix(B, d, 1, b))
         while true
-            b_spec = L*rand(Int16, n)
+            b_spec = L*(rand(1:max_entry_size, n))
             is_generic = check_genericity_of_specialization(Lb, b_spec)
             if is_generic
                 Lb_spec = evaluate.(Lb, Ref(b_spec))
@@ -166,7 +167,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
             generic_perturbation = false
             while !generic_perturbation
                 try
-                    h = rand(1:1000, (n+1))
+                    h = rand(1:max_entry_size, (n+1))
                     new_count = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
                         A, L, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
