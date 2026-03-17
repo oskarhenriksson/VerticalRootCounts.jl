@@ -1,17 +1,20 @@
 
-@doc raw""""
+@doc raw"""
     perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety; perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
 
-Perturb `TropB` by `perturbation` and intersect with `TropL` is the intersection is transversal.  Return four things:
+Perturb `TropB` by `perturbation` and intersect with `TropL` if the intersection is transversal.  Return four things:
 - the vector `perturbation`
 - a Boolean `true` or `false` depending on whether `TropB + perturbation` and `TropL` intersect transversally
-- a vector that contains the intersection points if the intersection is transversal
-- a vector that contains the multiplicities of the intersection points if the intersection is transversal and `with_multiplicities` is `true`.
+- a vector that contains the intersection points if the intersection is transversal (otherwise empty)
+- a vector that contains the multiplicities of the intersection points if the intersection is transversal and `with_multiplicities` is `true` (otherwise empty)
 
 Assumes that `TropL` is a polyhedral fan and that `TropB` is the tropicalization of a binomial variety, i.e., a regular linear space.
 """
-function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety;
-    perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
+function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
+    TropB::TropicalVariety;
+    perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)),
+    with_multiplicities::Bool = true
+)
 
     bergmanRays, bergmanLineality = rays_modulo_lineality(TropL)
     bergmanRays = matrix(QQ, bergmanRays)
@@ -20,7 +23,7 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB:
     minimalFaces, linearSpaceBasis = minimal_faces(TropB)
     linearSpaceBasis = matrix(QQ, linearSpaceBasis)
 
-    @req length(minimalFaces) == 1 "Several minimal faces found in TropL"
+    @req length(minimalFaces) == 1 "Several minimal faces found in TropB"
 
     # compute the projection matrix onto the orthogonal complement of the euclidean linear space
     basisOfComplementTransposed = kernel(linearSpaceBasis, side=:right)
@@ -31,7 +34,7 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB:
     projectedRays = bergmanRays * projectionMatrix
     projectedLineality = bergmanLineality * projectionMatrix
 
-    # make it consistent whether projectionPerturbation and perturbation are rows/colums
+    # make it consistent whether projectionPerturbation and perturbation are rows/columns
     projectedPerturbation = matrix(QQ, [perturbation]) * projectionMatrix
     stableIntersectionPoints = Vector{QQFieldElem}[]
     stableIntersectionMults = Int[]
