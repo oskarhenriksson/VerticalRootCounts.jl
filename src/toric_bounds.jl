@@ -168,7 +168,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
                 try
                     h = rand(1:1000, (n+1))
                     new_count = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
-                        A, L, b_spec, h, Trop_toric=Trop_toric, TropL=TropL
+                        A, L, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
                     generic_perturbation = true
                 catch err
