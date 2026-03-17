@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/oskarhenriksson/VerticalRootCounts.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/oskarhenriksson/VerticalRootCounts.jl/actions/workflows/ci.yml)
 
-This Julia package is a proof-of-concept implementation of the tropical root bounds presented in the paper *Tropical bounds on the number of steady states of chemical reaction networks* by Elisenda Feliu, Paul Helminck, Oskar Henriksson, Yue Ren, Benjamin Schröter, and Máté L. Telek.
+This Julia package is a proof-of-concept implementation of the tropical root bounds presented in the forthcoming preprint **Tropical bounds of vertical systems** by Elisenda Feliu, Paul Helminck, Oskar Henriksson, Yue Ren, Benjamin Schröter, and Máté L. Telek.
 
 The package is based on tropical functionality from the computer algebra package [Oscar.jl](https://github.com/oscar-system/Oscar.jl/) and the tropical homotopy continuation algorithm for mixed volumes from [MixedSubdivisions.jl](https://github.com/saschatimme/MixedSubdivisions.jl). The package also has an interface to the chemical reaction networks theory package [Catalyst.jl](https://github.com/SciML/Catalyst.jl).
 
