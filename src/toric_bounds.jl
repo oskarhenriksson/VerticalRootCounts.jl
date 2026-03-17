@@ -24,7 +24,7 @@ function toric_root_bound(A::ZZMatrix, L::QQMatrix;
     if isnothing(b_spec)
         is_generic = false
         while !is_generic
-            b_spec = L*rand(1:1000, n)
+            b_spec = L*rand(Int16, n)
             is_generic = check_genericity_of_specialization(Lb, b_spec)
         end
     end
@@ -142,8 +142,20 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
         enabled = show_progress
     );
     for b_attempt=1:num_b_attempts
-        b_spec = L*rand(1:1000, n)
-        Lb_spec = hcat(L, -matrix(QQ, d, 1, b_spec))
+
+        # Pick a generic b
+        B, b = rational_function_field(QQ, "b"=>1:d)
+        Lb = hcat(B.(L), -matrix(B, d, 1, b))
+        while true
+            b_spec = L*rand(Int16, n)
+            is_generic = check_genericity_of_specialization(Lb, b_spec)
+            if is_generic
+                Lb_spec = evaluate.(Lb, Ref(b_spec))
+                break
+            end
+        end
+        
+        # Tropical linear space
         TropL = tropical_linear_space(ideal(Lb_spec*vcat(x,z)))
         verbose && @info "Tropical linear space computed"
     

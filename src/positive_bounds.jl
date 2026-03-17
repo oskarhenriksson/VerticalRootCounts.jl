@@ -164,10 +164,29 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         enabled = show_progress
     );
     for b_k_attempt=1:num_b_k_attempts
-        b_spec = L*rand(1:max_entry_size, n)
-        Lb_spec = hcat(L, -matrix(QQ, d, 1, b_spec))
-        k_spec = rand(1:max_entry_size, m)
-        C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
+
+        # Pick a generic b
+        B, b = rational_function_field(QQ, "b"=>1:d)
+        Lb = hcat(B.(L), -matrix(B, d, 1, b))
+        while true
+            b_spec = L*rand(1:max_entry_size, n)
+            is_generic = check_genericity_of_specialization(Lb, b_spec)
+            if is_generic
+                Lb_spec = evaluate.(Lb, Ref(b_spec))
+                break
+            end
+        end
+
+        # Pick a generic k
+        K, k = rational_function_field(QQ, "k"=>1:m)
+        while true
+            k_spec = rand(1:max_entry_size, m)
+            is_generic = check_genericity_of_specialization(C_tilde, k_spec)
+            if is_generic
+                C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
+                break
+            end
+        end
     
         # Tropicalize the linear part of the modified system
         linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
