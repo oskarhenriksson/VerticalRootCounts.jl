@@ -122,7 +122,7 @@ struct ToricPositiveRootBound
     h::Vector{QQFieldElem}
 end
 
-function Base.show(io::IO, r::ToricPositiveRootBound)
+function Base.show(io::IO, ::MIME"text/plain", r::ToricPositiveRootBound)
     header = "Toric positive root bound"
     println(io, header)
     println(io, "="^(length(header)))
