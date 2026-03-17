@@ -4,6 +4,12 @@ export lower_bound_of_maximal_positive_steady_state_count,
     lower_bound_of_maximal_positive_root_count_fixed_b_k_h
 
 
+struct NongenericDirectionError <: Exception
+    msg::String
+end
+Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
+
+
 @doc raw"""
     lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     C::QQMatrix, M::ZZMatrix, L::QQMatrix,
@@ -86,10 +92,12 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
         verbose && @info "Tropical linear space computed"
     end
 
-    _, isTranversal, pts, _ = perturb_and_intersect_if_transversal(TropL, TropB,
+    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, TropB,
                                                                    perturbation=vcat(zeros(Int, n+1), h), with_multiplicities=false)
 
-    @req isTranversal "Random shift of the tropicalized binomial variety not generic, try a different h vector"
+    if !isTransversal 
+        throw(NongenericDirectionError("The shift of the tropicalized binomial variety not generic; try a different h vector"))
+    end
 
     # Count how many of the tropical points that are positive
     Ilin = ideal(R, C_tilde_spec*y) + ideal(R, Lb_spec*vcat(x,z))
@@ -180,10 +188,10 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
                     )
                     generic_perturbation = true
                 catch err
-                    if isa(err, ErrorException) && err.msg == "random direction not generic"
+                    if err isa NongenericDirectionError
                         continue
                     else
-                        error(err)
+                        rethrow()
                     end
                 end
             end

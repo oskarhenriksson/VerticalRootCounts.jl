@@ -98,7 +98,10 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
     end
 
     _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
-    @req isTransversal "input perturbation not generic"
+    
+    if !isTransversal 
+        throw(NongenericDirectionError("Input perturbation not generic"))
+    end
 
     # Count how many of the tropical points that are positive
     Lb_spec = hcat(L, -matrix(QQ.(b_spec)))
@@ -157,10 +160,10 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
                     )
                     generic_perturbation = true
                 catch err
-                    if isa(err, ErrorException) && err.msg == "random direction not generic"
+                    if err isa NongenericDirectionError
                         continue
                     else
-                        error(err)
+                        rethrow()
                     end
                 end
             end
