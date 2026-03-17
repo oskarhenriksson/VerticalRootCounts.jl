@@ -142,11 +142,12 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
         output = stdout,
         enabled = show_progress
     );
+    
+    B, b = rational_function_field(QQ, "b"=>1:d)
+    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     for b_attempt=1:num_b_attempts
 
         # Pick a generic b
-        B, b = rational_function_field(QQ, "b"=>1:d)
-        Lb = hcat(B.(L), -matrix(B, d, 1, b))
         while true
             b_spec = L*(rand(1:max_entry_size, n))
             is_generic = check_genericity_of_specialization(Lb, b_spec)

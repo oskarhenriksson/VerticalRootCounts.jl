@@ -114,7 +114,7 @@ system given by the coefficient matrix `C`, the exponent matrix `M`, and the aff
 
 The function randomly samples `num_b_k_attempts` choices of the b and k parameters, and
 for each such choice `num_h_attempts_per_b_k` shifts of the tropicalized binomial variety 
-in the space of auxillary variables in the modification.
+in the space of auxiliary variables in the modification.
 
 
 """
@@ -163,11 +163,12 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         output = stdout,
         enabled = show_progress
     );
+
+    B, b = rational_function_field(QQ, "b"=>1:d)
+    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     for b_k_attempt=1:num_b_k_attempts
 
         # Pick a generic b
-        B, b = rational_function_field(QQ, "b"=>1:d)
-        Lb = hcat(B.(L), -matrix(B, d, 1, b))
         while true
             b_spec = L*rand(1:max_entry_size, n)
             is_generic = check_genericity_of_specialization(Lb, b_spec)
@@ -178,7 +179,6 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         end
 
         # Pick a generic k
-        K, k = rational_function_field(QQ, "k"=>1:m)
         while true
             k_spec = rand(1:max_entry_size, m)
             is_generic = check_genericity_of_specialization(C_tilde, k_spec)
@@ -216,7 +216,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
             end
 
             # Update the current best count
-            if new_count > best_count || isnothing(best_b) || isnothing(best_k) || isnothing(best_h)
+            if new_count > best_count || isnothing(best_b) || isnothing(best_k) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
                 best_k = k_spec
