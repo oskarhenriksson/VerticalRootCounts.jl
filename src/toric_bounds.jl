@@ -110,6 +110,22 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
 end
 
 
+struct ToricPositiveRootBound
+    bound::Int
+    b_spec::Vector{QQFieldElem}
+    h::Vector{QQFieldElem}
+end
+
+function Base.show(io::IO, r::ToricPositiveRootBound)
+    header = "Toric positive root bound"
+    println(io, header)
+    println(io, "="^(length(header)))
+    println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
+    println(io, " Choice of constant terms b: ", r.b_spec)
+    println(io, " Choice of perturbation h: ", r.h)
+end
+
+
 function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatrix,; 
     num_b_attempts::Int=5, 
     num_h_attempts_per_b::Int=10, 
@@ -199,6 +215,6 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
             ]
         )
     end
-    return best_count, best_b, best_h
+    return ToricPositiveRootBound(best_count, best_b, best_h)
 end
 

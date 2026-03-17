@@ -9,6 +9,21 @@ struct NongenericDirectionError <: Exception
 end
 Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
 
+struct PositiveRootBound
+    bound::Int
+    b_spec
+    k_spec
+    h
+end
+function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootCountLowerBoundResult)
+    header = "Positive tropical root bound"
+    println(io, header)
+    println(io, "="^(length(header)))
+    println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
+    println(io, " Choice of constant terms b: ", r.b_spec)
+    println(io, " Choice of parameters k: ", r.k_spec)
+    print(io, " Choice of perturbation h: ", r.h)
+end
 
 @doc raw"""
     lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
@@ -136,7 +151,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
 
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(C, M, L)
-        return 0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r)
+        return PositiveRootBound(0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r))
     end
 
     @req nrows(L) == d "L must have the same number of rows as the corank of C"
@@ -234,7 +249,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
             ]
         )
     end
-    return best_count, best_b, best_k, best_h
+    return PositiveRootBound(best_count, best_b, best_k, best_h)
 end
 
 @doc raw"""

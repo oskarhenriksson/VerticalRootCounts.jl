@@ -28,8 +28,8 @@ using VerticalRootCounts
     h = [37,97,18]
     @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 3
     
-    bound, _, _, _ = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
-    @test bound == 3
+    result = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
+    @test result.bound == 3
     
 end
 
@@ -45,8 +45,8 @@ end
 
     @test generic_root_count(C, M, check_transversality=true) == 0
     @test generic_root_count(C, M, check_transversality=false) == 0
-    bound, _, _, _ = lower_bound_of_maximal_positive_root_count(C, M)
-    @test bound == 0
+    result = lower_bound_of_maximal_positive_root_count(C, M)
+    @test result.bound == 0
 
 end
 
@@ -170,12 +170,12 @@ end
     C, M, L = steady_state_system(rn)
 
     @test generic_root_count(C, M, L) == 6
-    bound, _, _, _ = lower_bound_of_maximal_positive_root_count(C, M, L)
-    @test bound == 1
+    result = lower_bound_of_maximal_positive_root_count(C, M, L)
+    @test result.bound == 1
     A = matrix(ZZ, [[3, 2]])
     @test toric_root_bound(A, L) == 3
-    bound, _, _ = toric_lower_bound_of_maximal_positive_root_count(A, L)
-    @test bound == 1
+    result = toric_lower_bound_of_maximal_positive_root_count(A, L)
+    @test result.bound == 1
 
 end
 
