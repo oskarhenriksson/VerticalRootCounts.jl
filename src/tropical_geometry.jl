@@ -8,7 +8,7 @@ Perturb `TropB` by `perturbation` and intersect with `TropL` if the intersection
 - a vector that contains the intersection points if the intersection is transversal (otherwise empty)
 - a vector that contains the multiplicities of the intersection points if the intersection is transversal and `with_multiplicities` is `true` (otherwise empty)
 
-Assumes that `TropL` is a polyhedral fan and that `TropB` is the tropicalization of a binomial variety, i.e., a regular linear space.
+Assumes that `TropL` is a simplicial fan and that `TropB` is the tropicalization of a binomial variety, i.e., a regular linear space.
 """
 function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
     TropB::TropicalVariety;
@@ -40,7 +40,7 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
     stableIntersectionMults = Int[]
 
     indicesOfCones = ray_indices(maximal_polyhedra(TropL))
-    nRaysPerCone = sum(indicesOfCones[1, :])
+    nRaysPerCone = sum(indicesOfCones[1, :]) # same for all rows since TropL is simplicial
     for i in 1:nrows(indicesOfCones)
         # read off rays of the projected cone
         indicesOfCone = findall(indicesOfCones[i, :])
