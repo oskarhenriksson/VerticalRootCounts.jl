@@ -169,7 +169,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
     for b_k_attempt=1:num_b_k_attempts
 
         # Pick a generic b
-        b_spec = QQFieldElem[]
+        b_spec = nothing
         while true
             b_spec = L*rand(1:max_entry_size, n)
             is_generic = check_genericity_of_specialization(Lb, b_spec)
@@ -180,7 +180,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         Lb_spec = evaluate.(Lb, Ref(b_spec))
 
         # Pick a generic k
-        k_spec = QQFieldElem[]
+        k_spec = nothing
         while true
             k_spec = rand(1:max_entry_size, m)
             is_generic = check_genericity_of_specialization(C_tilde, k_spec)
