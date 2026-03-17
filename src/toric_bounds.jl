@@ -143,7 +143,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
     );
     for b_attempt=1:num_b_attempts
         b_spec = L*rand(1:1000, n)
-        Lb_spec = hcat(L, -matrix(L*rand(1:1000, n)))
+        Lb_spec = hcat(L, -matrix(QQ, d, 1, b_spec))
         TropL = tropical_linear_space(ideal(Lb_spec*vcat(x,z)))
         verbose && @info "Tropical linear space computed"
     
@@ -169,7 +169,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
             end
               
             # Update the current best count
-            if new_count > best_count || isnothing(best_b) || isnothing(best_h)
+            if new_count > best_count || isnothing(best_b) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
                 best_h = h
