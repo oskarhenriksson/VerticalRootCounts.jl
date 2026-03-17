@@ -148,14 +148,15 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
     for b_attempt=1:num_b_attempts
 
         # Pick a generic b
+        b_spec = nothing
         while true
             b_spec = L*(rand(1:max_entry_size, n))
             is_generic = check_genericity_of_specialization(Lb, b_spec)
             if is_generic
-                Lb_spec = evaluate.(Lb, Ref(b_spec))
                 break
             end
         end
+        Lb_spec = evaluate.(Lb, Ref(b_spec))
         
         # Tropical linear space
         TropL = tropical_linear_space(ideal(Lb_spec*vcat(x,z)))
