@@ -15,7 +15,7 @@ struct PositiveRootBound
     k_spec
     h
 end
-function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootCountLowerBoundResult)
+function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBound)
     header = "Positive tropical root bound"
     println(io, header)
     println(io, "="^(length(header)))
