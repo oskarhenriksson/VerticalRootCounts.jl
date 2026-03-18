@@ -27,7 +27,7 @@ generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix;
 """
 function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)); 
         b_spec = nothing, 
-        k_spec = nothing,
+        a_spec = nothing,
         check_transversality::Bool=true, 
         verbose::Bool=false)
 
@@ -48,15 +48,15 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     r = ncols(M_tilde)
 
     # Pick a generic specialization of the parameters
-    if isnothing(k_spec)
+    if isnothing(a_spec)
         is_generic = false
         while !is_generic
-            k_spec = rand(1:1000, m)
-            is_generic = check_genericity_of_specialization(C_tilde, k_spec)
+            a_spec = rand(1:1000, m)
+            is_generic = check_genericity_of_specialization(C_tilde, a_spec)
         end
     end
-    @req check_genericity_of_specialization(C_tilde, k_spec) "Choice of parameters needs to be generic"
-    C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
+    @req check_genericity_of_specialization(C_tilde, a_spec) "Choice of parameters needs to be generic"
+    C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
 
     # Symbolic coefficient matrix for the augmentation of the system
     B, b = rational_function_field(QQ, "b"=>1:d)

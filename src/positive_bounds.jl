@@ -12,7 +12,7 @@ Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
 struct PositiveRootBound
     bound::Int
     b_spec
-    k_spec
+    a_spec
     h
     TropB::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
@@ -23,7 +23,7 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBound)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
     println(io, " Choice of constant terms b: ", r.b_spec)
-    println(io, " Choice of parameters k: ", r.k_spec)
+    println(io, " Choice of parameters k: ", r.a_spec)
     print(io, " Choice of perturbation h: ", r.h)
 end
 
@@ -31,7 +31,7 @@ end
     lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     C::QQMatrix, M::ZZMatrix, L::QQMatrix,
     b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
-    k_spec::Union{Vector{Int},Vector{QQFieldElem}},
+    a_spec::Union{Vector{Int},Vector{QQFieldElem}},
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
     TropB::Union{TropicalVariety,Nothing}=nothing, 
     TropL::Union{TropicalLinearSpace,Nothing}=nothing,
@@ -39,7 +39,7 @@ end
 )
 
 Compute a lower bound of the maximal positive root count for an augmented vertically parametrized system given by 
-the matrices `C`, `M` and `L`, given a fixed choice of constant terms `b_spec`, parameters `k_spec` and shift `h` 
+the matrices `C`, `M` and `L`, given a fixed choice of constant terms `b_spec`, parameters `a_spec` and shift `h` 
 of the tropicalized binomial variety.
 
 # Example
@@ -63,7 +63,7 @@ julia> lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
 function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     C::QQMatrix, M::ZZMatrix, L::QQMatrix,
     b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
-    k_spec::Union{Vector{Int},Vector{QQFieldElem}},
+    a_spec::Union{Vector{Int},Vector{QQFieldElem}},
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
     TropB::Union{TropicalVariety,Nothing}=nothing, 
     TropL::Union{TropicalLinearSpace,Nothing}=nothing,
@@ -81,7 +81,7 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     @req nrows(L) == d "L must have the same number of rows as the corank of C"
     @req length(b_spec) == d "b_spec must have same length as the number of rows of L"
     @req length(h) == r "h must have same length as the number of columns of M_tilde"
-    @req length(k_spec) == m "k_spec must have same length as the number of columns of M"
+    @req length(a_spec) == m "a_spec must have same length as the number of columns of M"
 
     K, t = rational_function_field(QQ,"t")
     nu = tropical_semiring_map(K,t)
@@ -99,8 +99,8 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     @req check_genericity_of_specialization(Lb, b_spec) "b_spec must be generic"
     Lb_spec = evaluate.(Lb, Ref(b_spec))
 
-    @req check_genericity_of_specialization(C_tilde, k_spec) "k_spec must be generic"
-    C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
+    @req check_genericity_of_specialization(C_tilde, a_spec) "a_spec must be generic"
+    C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
 
     if isnothing(TropL)
         linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
@@ -126,8 +126,8 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     )
 end
 
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F::AugmentedVerticalSystem, b_spec, k_spec, h; kwargs...) = 
-    lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F.C, F.M, F.L, b_spec, k_spec, h; kwargs...)
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F::AugmentedVerticalSystem, b_spec, a_spec, h; kwargs...) = 
+    lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F.C, F.M, F.L, b_spec, a_spec, h; kwargs...)
 
 
 @doc raw"""
@@ -207,15 +207,15 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         Lb_spec = evaluate.(Lb, Ref(b_spec))
 
         # Pick a generic k
-        k_spec = nothing
+        a_spec = nothing
         while true
-            k_spec = rand(1:max_entry_size, m)
-            is_generic = check_genericity_of_specialization(C_tilde, k_spec)
+            a_spec = rand(1:max_entry_size, m)
+            is_generic = check_genericity_of_specialization(C_tilde, a_spec)
             if is_generic
                 break
             end
         end
-        C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
+        C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
     
         # Tropicalize the linear part of the modified system
         linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
@@ -232,7 +232,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
                 try
                     h = rand(1:max_entry_size, r)
                     new_count = lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
-                        C, M, L, b_spec, k_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
+                        C, M, L, b_spec, a_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
                     )
                     generic_perturbation = true
                 catch err
@@ -248,7 +248,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
             if new_count > best_count || isnothing(best_b) || isnothing(best_k) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
-                best_k = k_spec
+                best_k = a_spec
                 best_h = h
                 best_TropL = TropL
             end

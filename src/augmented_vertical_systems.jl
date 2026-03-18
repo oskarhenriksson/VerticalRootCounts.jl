@@ -49,10 +49,10 @@ end
 
 function augmented_vertical_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
 
-    KB, k, b = rational_function_field(QQ, "k"=>1:ncols(M), "b"=>1:nrows(L))
-    R, x = polynomial_ring(KB, "x"=>1:nrows(M))
+    AB, a, b = rational_function_field(QQ, "a"=>1:ncols(M), "b"=>1:nrows(L))
+    R, x = polynomial_ring(AB, "x"=>1:nrows(M))
 
-    vertical_part = C*[k[j]*prod(x .^ M[:, j]) for j in 1:ncols(M)]
+    vertical_part = C*[a[j]*prod(x .^ M[:, j]) for j in 1:ncols(M)]
     augmentation_part = L*x .- b
 
     return [vertical_part; augmentation_part]
@@ -82,9 +82,9 @@ end
     julia> C_tilde, M_tilde = minimal_presentation(C, M);
 
     julia> C_tilde
-    [   0           k[3]   -k[4]           k[5]]
-    [k[1]   -k[2] - k[3]       0              0]
-    [   0              0    k[4]   -k[5] - k[6]]
+    [   0           a[3]   -a[4]           a[5]]
+    [a[1]   -a[2] - a[3]       0              0]
+    [   0              0    a[4]   -a[5] - a[6]]
 
     julia> M_tilde
     [1   0   0   0]
@@ -102,12 +102,12 @@ function minimal_presentation(C::QQMatrix, M::ZZMatrix)
     r = length(unique_columns)
 
     M_tilde = matrix(ZZ, hcat(unique_columns...))
-    K, k = rational_function_field(QQ, "k"=>1:ncols(M))
-    C_tilde = zero_matrix(K, nrows(C), r) 
+    A, a = rational_function_field(QQ, "a"=>1:ncols(M))
+    C_tilde = zero_matrix(A, nrows(C), r) 
     for i = 1:r
         indices = findall(c -> c == unique_columns[i], columns)
         for j in indices
-            C_tilde[:, i] += k[j] .* C[:, j]
+            C_tilde[:, i] += a[j] .* C[:, j]
         end
     end
     return C_tilde, M_tilde
