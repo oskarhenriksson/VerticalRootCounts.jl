@@ -54,7 +54,12 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
             firstZero = findfirst(isequal(0), solution)
             if (firstZero != nothing) && (firstZero[2] <= nRaysPerCone)
                 # random direction not generic, lies on the boundary of the cone
-                return perturbation, false, stableIntersectionPoints, stableIntersectionMults
+                return (
+                    perturbation = perturbation,
+                    is_transversal = false,
+                    points = stableIntersectionPoints,
+                    multiplicities = stableIntersectionMults
+                )
             end
             firstNegative = findfirst(a -> (a < 0), solution)
             if (firstNegative == nothing) || (firstNegative[2] > nRaysPerCone)
