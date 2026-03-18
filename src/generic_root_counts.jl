@@ -39,9 +39,9 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     n = nrows(M) #number of variables
     m = ncols(M) #number of parameters
     s = rank(C) #rank
-    d = n-s #corank
+    d = nrows(L) #corank
 
-    @req nrows(L) == d "The augmentation matrix L must have the same number of rows as the corank of the coefficient matrix"
+    @req s + d == n "The system needs to be square (number of rows of C and L need to sum to the number of varialbes)"
 
     # Monomial re-embedding of the system
     C_tilde, M_tilde = minimal_presentation(C, M)
@@ -113,6 +113,33 @@ end
 
 
 
+"""
+    generic_root_count(F::AugmentedVerticalSystem; kwargs...)
+
+    Compute the generic root count of an augmented vertical system `F`.
+
+     # Example
+    ```jldoctest
+    julia> C = matrix(QQ, [1 -1 -1]);
+
+    julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
+ 
+    julia> L = matrix(QQ, [1 1]);
+
+    julia> F = AugmentedVerticalSystem(C, M, L);
+
+    julia> generic_root_count(F)
+    3
+
+    julia> generic_root_count(F, check_transversality=false)
+    3
+    ```
+
+"""
+generic_root_count(F::AugmentedVerticalSystem; kwargs...) = generic_root_count(F.C, F.M, F.L; kwargs...)
+
+
+
 @doc raw"""
     steady_state_degree(rn::ReactionSystem; kwargs...)
 
@@ -132,7 +159,7 @@ julia> steady_state_degree(rn)
 
 """
 steady_state_degree(rn::ReactionSystem; kwargs...) = 
-    generic_root_count(steady_state_system(rn)...; kwargs...)
+    generic_root_count(steady_state_system(rn); kwargs...)
 
 
 
@@ -166,4 +193,9 @@ function generic_degree(C::QQMatrix, M::ZZMatrix)
     # Compute the generic root count
     return generic_root_count(C, M, L_generic)
 
+end
+
+function generic_degree(F::AugmentedVerticalSystem)
+    @req nrows(F.L) == 0 "The system needs to be purely vertical (number of rows of L needs to be zero)"
+    generic_degree(F.C, F.M)
 end

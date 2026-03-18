@@ -18,3 +18,4 @@ function mixed_volume(F::Vector{<:MPolyRingElem})
 end
 
 
+mixed_volume(F::AugmentedVerticalSystem) = mixed_volume(F.system)
