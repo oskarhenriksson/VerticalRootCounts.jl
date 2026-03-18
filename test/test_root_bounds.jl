@@ -11,41 +11,44 @@ using VerticalRootCounts
     M = matrix(ZZ, [[1,0,2], [0,1,1]])
     L = matrix(QQ, [[1,1]])
 
-    @test generic_root_count(C, M, L) == 3
+    F = AugmentedVerticalSystem(C, M, L)
+
+    @test generic_root_count(F) == 3
+    @test has_nondegenerate_zero(F)
     
     rn = @reaction_network begin
         k1, X1 --> X2
         k2, X2 --> X1
         k3, 2*X1 + X2 --> 3*X1
     end;
-
-    @test has_nondegenerate_zero(C, M, L)
+    
     @test steady_state_degree(rn, check_transversality=true) == 3
     @test steady_state_degree(rn, check_transversality=false) == 3
 
     b = [71]
     k = [83, 56, 13]
     h = [37,97,18]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 3
+    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 3
     
     result = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
     @test result.bound == 3
     
 end
 
-@testset "Purely vertical system" begin
+@testset "Degenerate purely vertical system" begin
     
     Random.seed!(1234)
 
     C = matrix(QQ, [-1  0  0  0  1  0; 0 -1  0  0  0  1;  0  0 -1  1  0  0]);
     M = matrix(ZZ, [3  2  1  0  0  0; 0  1  0  2  1  0; 0  0  1  0  1  2]);
-    generic_root_count(C, M)
 
-    @test !has_nondegenerate_zero(C, M)
-
-    @test generic_root_count(C, M, check_transversality=true) == 0
-    @test generic_root_count(C, M, check_transversality=false) == 0
-    result = lower_bound_of_maximal_positive_root_count(C, M)
+    F = AugmentedVerticalSystem(C, M)
+    
+    @test !has_nondegenerate_zero(F)
+    
+    @test generic_root_count(F, check_transversality=true) == 0
+    @test generic_root_count(F, check_transversality=false) == 0
+    result = lower_bound_of_maximal_positive_root_count(F)
     @test result.bound == 0
 
 end
@@ -65,11 +68,11 @@ end
 
     @test steady_state_degree(rn) == 2
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
     b = [69, 42, 81]
     k = [284, 215, 921, 770, 883, 792]
     h = [12, 86, 11, 27, 84]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 2
+    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 2
 
 end
 
@@ -88,11 +91,11 @@ end
 
     @test steady_state_degree(rn) == 3
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
     b = [59, 34]
     k = [84, 46, 30, 13, 23, 68]
     h = [834, 131, 91, 217, 253, 498]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 3
+    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 3
 
 end
 
@@ -111,16 +114,17 @@ end
 
     @test steady_state_degree(rn) == 3
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
 
-    @test generic_degree(C, M) == 4
+    @test generic_degree(F.C, F.M) == 4
 
     b = [68, 52, 99]
     k = [84, 46, 30, 13, 23, 68]
     h = [79, 26, 89, 92]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 1
+    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 1
 
-
+    M = F.M
+    L = F.L
     A = kernel(matrix(ZZ, hcat([M[:, i] - M[:, ncols(M)] for i=1:ncols(M)-1]...)))
     @test toric_root_bound(A, L, check_transversality=true) == 3
     @test toric_root_bound(A, L, check_transversality=false) == 3
@@ -158,7 +162,7 @@ end
 
 @testset "Triangle network" begin
 
-    Oscar.set_seed!(13371337)
+    Oscar.set_seed!(1234)
 
     rn = Catalyst.@reaction_network begin
         k1, 3*X1 + 2*X2 --> 6*X1
@@ -167,14 +171,15 @@ end
         k4, 6*X1 -->  4*X2
     end;
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
 
-    @test generic_root_count(C, M, L) == 6
-    result = lower_bound_of_maximal_positive_root_count(C, M, L)
+    @test generic_root_count(F) == 6
+    result = lower_bound_of_maximal_positive_root_count(F)
     @test result.bound == 1
     A = matrix(ZZ, [[3, 2]])
+    L = F.L
     @test toric_root_bound(A, L) == 3
-    result = toric_lower_bound_of_maximal_positive_root_count(A, L)
+    result = toric_lower_bound_of_maximal_positive_root_count(A, F.L)
     @test result.bound == 1
 
 end
@@ -214,8 +219,7 @@ end
         k31, X11         --> X10
     end;
 
-    C, M, L = steady_state_system(rn)
-    F = augmented_vertical_system(C, M, L)
+    F = steady_state_system(rn)
     @test mixed_volume(F) == 56
 
 end
