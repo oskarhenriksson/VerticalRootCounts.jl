@@ -3,24 +3,23 @@ export toric_root_bound,
     toric_lower_bound_of_maximal_positive_root_count_fixed_b_h,
     toric_lower_bound_of_maximal_positive_root_count
 
-function toric_root_bound(A::ZZMatrix, L::QQMatrix;
+function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     b_spec::Union{Nothing,Vector{Int},Vector{QQFieldElem}}=nothing,
     check_transversality::Bool=true,
     verbose::Bool=false
 )
 
-    n = ncols(A) # number of variables
-    d = nrows(L) # number of affine equations
+    L, Lb = F.L, F.Lb
+    n, d = F.n, F.d
+
+    @req ncols(A) == n "Number of columns of A needs to match the number of variables in the system"
     @req rank(A) == d "System needs to be effectively square"
 
     # Add a column corresponding to the homogenization variable
     A_extended = hcat(A, zero_matrix(ZZ,nrows(A),1))
 
-    # Pick a generic choice of constant terms
-    B, b = rational_function_field(QQ, "b"=>1:d)
-    Lb = hcat(B.(L), -matrix(b))
-
     # Pick a generic specialization of the constant terms
+    b_spec = nothing
     if isnothing(b_spec)
         is_generic = false
         while !is_generic
@@ -29,6 +28,7 @@ function toric_root_bound(A::ZZMatrix, L::QQMatrix;
         end
     end
     @req check_genericity_of_specialization(Lb, b_spec) "Choice of constant terms to be generic"
+    @req length(b_spec) == d "b_spec must have same length as the number of rows of L"
     Lb_spec = evaluate.(Lb, Ref(b_spec))
 
     # Nondegeneracy check
@@ -72,17 +72,25 @@ end
 
 
 function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
-    A::ZZMatrix, L::QQMatrix,
+    A::ZZMatrix, F::AugmentedVerticalSystem,
     b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
     Trop_toric::Union{TropicalVariety,Nothing}=nothing, 
     TropL::Union{TropicalLinearSpace,Nothing}=nothing,
     verbose::Bool=false
 )
-    n = ncols(A) # number of variables
-    d = nrows(L) # number of affine equations
+    
+    n, d = F.n, F.d
+    L, Lb = F.L, F.Lb
+    @req ncols(A) == n "Number of columns of A needs to match the number of variables in the system"
     @req rank(A) == d "System needs to be effectively square"
+    @req length(b_spec) == d "b_spec must have same length as the number of rows of L"
+    @req length(h) == n+1 "h must have same length as the number of variables plus one (for the homogenization variable)"   
+
     R, x, z = polynomial_ring(QQ, "x"=>1:n, "z"=>1:1)
+
+    # Check genericity of input
+    @req check_genericity_of_specialization(Lb, b_spec) "b_spec must be generic"
 
     if isnothing(TropL)
         # Tropicalize the affine linear space
@@ -134,18 +142,20 @@ function Base.show(io::IO, ::MIME"text/plain", r::ToricPositiveRootBound)
 end
 
 
-function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatrix,; 
+function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::AugmentedVerticalSystem; 
     num_b_attempts::Int=5, 
     num_h_attempts_per_b::Int=10, 
     max_entry_size::Int=1000,
     show_progress::Bool=true,
     verbose::Bool=false
 )
-    n = ncols(A) # number of variables
-    d = nrows(L) # number of affine equations
-    R, x, z = polynomial_ring(QQ, "x"=>1:n, "z"=>1:1)
+
+    n, d = F.n, F.d
+    L, Lb = F.L, F.Lb
+    @req ncols(A) == n "Number of columns of A needs to match the number of variables in the system"
     @req rank(A) == d "System needs to be effectively square"
 
+    R, x, z = polynomial_ring(QQ, "x"=>1:n, "z"=>1:1)
 
     # Tropicalize the toric variety
     A_extended = hcat(A, zero_matrix(ZZ,nrows(A),1)) # Add a column corresponding to the homogenization variable
@@ -168,8 +178,6 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
         enabled = show_progress
     );
     
-    B, b = rational_function_field(QQ, "b"=>1:d)
-    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     for b_attempt=1:num_b_attempts
 
         # Pick a generic b
@@ -196,7 +204,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
                 try
                     h = rand(1:max_entry_size, (n+1))
                     new_count = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
-                        A, L, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
+                        A, F, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
                     generic_perturbation = true
                 catch err

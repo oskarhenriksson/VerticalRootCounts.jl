@@ -116,7 +116,7 @@ end
 
     F = steady_state_system(rn)
 
-    @test generic_degree(F.C, F.M) == 4
+    @test generic_degree(AugmentedVerticalSystem(F.C, F.M)) == 4
 
     b = [68, 52, 99]
     k = [84, 46, 30, 13, 23, 68]
@@ -124,13 +124,12 @@ end
     @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 1
 
     M = F.M
-    L = F.L
     A = kernel(matrix(ZZ, hcat([M[:, i] - M[:, ncols(M)] for i=1:ncols(M)-1]...)))
-    @test toric_root_bound(A, L, check_transversality=true) == 3
-    @test toric_root_bound(A, L, check_transversality=false) == 3
+    @test toric_root_bound(A, F, check_transversality=true) == 3
+    @test toric_root_bound(A, F, check_transversality=false) == 3
 
     h = [936, 145, 170, 323, 169, 271, 439]
-    @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, L, b, h) == 1
+    @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, F, b, h) == 1
 
 end
 
@@ -177,9 +176,8 @@ end
     result = lower_bound_of_maximal_positive_root_count(F)
     @test result.bound == 1
     A = matrix(ZZ, [[3, 2]])
-    L = F.L
-    @test toric_root_bound(A, L) == 3
-    result = toric_lower_bound_of_maximal_positive_root_count(A, F.L)
+    @test toric_root_bound(A, F) == 3
+    result = toric_lower_bound_of_maximal_positive_root_count(A, F)
     @test result.bound == 1
 
 end

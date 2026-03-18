@@ -6,8 +6,7 @@ export steady_state_degree,
 generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
     b_spec = nothing, check_transversality::Bool=true, verbose::Bool=false)
 
-    Compute the generic root count of an augmented vertically parametrized system given by 
-    the coefficient matrix `C`, the exponent matrix `M`, and the affine form matrix `L`.
+   Compute the generic root count of an augmented vertical system `F`.
 
     # Example
     ```jldoctest
@@ -17,35 +16,39 @@ generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix;
  
     julia> L = matrix(QQ, [1 1]);
 
-    julia> generic_root_count(C, M, L)
+    julia> F = AugmentedVerticalSystem(C, M, L);
+
+    julia> generic_root_count(F)
     3
 
-    julia> generic_root_count(C, M, L, check_transversality=false)
+    julia> generic_root_count(F, check_transversality=false)
     3
     ```
 
 """
-function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)); 
+function generic_root_count(F::AugmentedVerticalSystem;
         b_spec = nothing, 
         a_spec = nothing,
         check_transversality::Bool=true, 
         verbose::Bool=false)
 
+    @req is_square(F) "The system needs to be square (number of rows of C and L need to sum to the number of varialbes)"
+
     # Check whether there are nondegenerate zeros at all
-    if !has_nondegenerate_zero(C, M, L)
+    if !has_nondegenerate_zero(F)
         return 0
     end
-    
-    n = nrows(M) #number of variables
-    m = ncols(M) #number of parameters
-    s = rank(C) #rank
-    d = nrows(L) #corank
 
-    @req s + d == n "The system needs to be square (number of rows of C and L need to sum to the number of varialbes)"
+    C, M, L = F.C, F.M, F.L #defining matrices
+    C_tilde, M_tilde = F.C_tilde, F.M_tilde #minimal presentation
+    Lb = F.Lb #symbolic coefficient matrix for the augmentation of the system
 
-    # Monomial re-embedding of the system
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde)
+    n = F.n #number of variables
+    m = F.m #number of parameters
+    s = F.s #number of polynomials in the nonlinear part
+    d = F.d #number of augmenting linear forms
+    r = F.r #number of monomials in the nonlinear part
+
 
     # Pick a generic specialization of the parameters
     if isnothing(a_spec)
@@ -57,10 +60,6 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     end
     @req check_genericity_of_specialization(C_tilde, a_spec) "Choice of parameters needs to be generic"
     C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
-
-    # Symbolic coefficient matrix for the augmentation of the system
-    B, b = rational_function_field(QQ, "b"=>1:d)
-    Lb = hcat(B.(L), -matrix(B, d, 1, b))
 
     # Pick a generic specialization of the constant terms
     if isnothing(b_spec)
@@ -112,34 +111,6 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
 end
 
 
-
-"""
-    generic_root_count(F::AugmentedVerticalSystem; kwargs...)
-
-    Compute the generic root count of an augmented vertical system `F`.
-
-     # Example
-    ```jldoctest
-    julia> C = matrix(QQ, [1 -1 -1]);
-
-    julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
- 
-    julia> L = matrix(QQ, [1 1]);
-
-    julia> F = AugmentedVerticalSystem(C, M, L);
-
-    julia> generic_root_count(F)
-    3
-
-    julia> generic_root_count(F, check_transversality=false)
-    3
-    ```
-
-"""
-generic_root_count(F::AugmentedVerticalSystem; kwargs...) = generic_root_count(F.C, F.M, F.L; kwargs...)
-
-
-
 @doc raw"""
     steady_state_degree(rn::ReactionSystem; kwargs...)
 
@@ -167,35 +138,33 @@ steady_state_degree(rn::ReactionSystem; kwargs...) =
 """
     generic_degree(C::QQMatrix, M::ZZMatrix)
 
-Compute the generic degree of the ideal of a vertical system.
+Compute the generic degree of the ideal of a purely vertical system `F`.
 
 In accordance with Bézout's theorem, we compute this by intersecting with a 
 generic affine space of complementary dimension.
 
 """
-function generic_degree(C::QQMatrix, M::ZZMatrix) 
+function generic_degree(F) 
 
-    n = nrows(M) #number of variables
-    m = ncols(M) #number of parameters
-    s = rank(C) #rank
+    @req is_purely_vertical(F) "The system needs to be purely vertical (number of rows of L needs to be zero)"
+
+    n = nrows(F.M) #number of variables
+    s = rank(F.C) #rank
 
     # Check for nondegeneracy
-    if !has_nondegenerate_zero(C, M)
+    if !has_nondegenerate_zero(F)
         return 0
     end
 
     # Augment the system to a square system by an L with full support
-    L_generic = matrix(QQ, rand(Int16, n-s, nrows(M)))
+    L_generic = matrix(QQ, rand(Int16, n-s, n))
 
     # Check that the matroid is uniform (all Plücker coordinates are nonzero)
     all(!is_zero, minors(L_generic, nrows(L_generic)))
 
+    F_augmented = AugmentedVerticalSystem(F.C, F.M, L_generic)
+
     # Compute the generic root count
-    return generic_root_count(C, M, L_generic)
+    return generic_root_count(F_augmented)
 
-end
-
-function generic_degree(F::AugmentedVerticalSystem)
-    @req nrows(F.L) == 0 "The system needs to be purely vertical (number of rows of L needs to be zero)"
-    generic_degree(F.C, F.M)
 end

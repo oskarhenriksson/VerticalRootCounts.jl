@@ -17,6 +17,8 @@ struct AugmentedVerticalSystem
     system::Vector{<:AbstractAlgebra.Generic.MPoly{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}}
 end
 
+is_square(F::AugmentedVerticalSystem) = (F.s + F.d == F.n)
+is_purely_vertical(F::AugmentedVerticalSystem) = (F.d == 0)
 
 
 """

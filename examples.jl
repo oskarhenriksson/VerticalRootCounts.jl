@@ -9,26 +9,26 @@ rn = @reaction_network begin
 end;
 
 # Compute the steady state degree directy from the network
-@time sd = steady_state_degree(rn)
+@time sd = steady_state_degree(rn)  
 
 # The defining matrices for the steady state system
-C, M, L = steady_state_system(rn)
+F = steady_state_system(rn)
 
 # Generic root count of the steady state system
-@time generic_root_count(C, M, L)
+@time generic_root_count(F)
 
 # Without the transversality check
-@time generic_root_count(C, M, L, check_transversality=false)
+@time generic_root_count(F, check_transversality=false)
 
-# Lower bound directly from the network
-@time bound, b, k, h = lower_bound_of_maximal_positive_steady_state_count(rn)
-@time bound, b, k, h = lower_bound_of_maximal_positive_root_count(C, M, L)
+# Lower bound
+@time result = lower_bound_of_maximal_positive_steady_state_count(rn)
+@time result = lower_bound_of_maximal_positive_root_count(F)
 
 # Vertify the result for a given choice of b and h
 b = [71]
 k = [839, 562, 13]
 h = [37,97,18]
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h)
 
 # Cell cycle
 rn = Catalyst.@reaction_network begin
@@ -43,11 +43,11 @@ end;
 @time lower_bound_of_maximal_positive_steady_state_count(rn)
 
 # Verify the result for a given choice of b and h
-C, M, L = steady_state_system(rn)
+F = steady_state_system(rn)
 b =  [69, 42, 81]
 k = [622, 732, 905, 631, 567, 253]
 h = [12, 86, 11, 27, 84]
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h)
 
 # HHK
 rn = Catalyst.@reaction_network begin
@@ -62,11 +62,11 @@ end;
 @time lower_bound_of_maximal_positive_steady_state_count(rn)
 
 # Verify the result for a given choice of b and h
-C, M, L = steady_state_system(rn)
+F = steady_state_system(rn)
 b = [59, 34]
 k = [839, 562, 13, 421, 233, 109]
 h = [84, 46, 30, 13, 23, 68]
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h)
   
 
 # Triangle network
@@ -77,13 +77,13 @@ rn = Catalyst.@reaction_network begin
   k4, 6*X1 -->  4*X2
 end
 
-C, M, L = steady_state_system(rn)
+F = steady_state_system(rn)
 
-generic_root_count(C, M, L)
-bound, _, _ = lower_bound_of_maximal_positive_root_count(C, M, L)
+generic_root_count(F)
+result = lower_bound_of_maximal_positive_root_count(F)
 A = matrix(ZZ, [[3, 2]])
-toric_root_bound(A, L)
-bound, _, _ = toric_lower_bound_of_maximal_positive_root_count(A, L)
+toric_root_bound(A, F)
+result = toric_lower_bound_of_maximal_positive_root_count(A, F)
 
 
 # 1-site phosphorylation
@@ -97,18 +97,19 @@ rn = Catalyst.@reaction_network begin
 end;
 
 @time steady_state_degree(rn)
-@time lower_bound_of_maximal_positive_steady_state_count(rn)
+@time result = lower_bound_of_maximal_positive_steady_state_count(rn)
 
 # Verify the result for a given choice of b and h
-C, M, L = steady_state_system(rn)
+F = steady_state_system(rn)
 b = [68, 52, 99]
 k = [839, 562, 13, 421, 233, 109]
 h = [79, 26, 89, 92]
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h)
 
+M = F.M
 A = kernel(matrix(ZZ, hcat([M[:, i] - M[:, ncols(M)] for i=1:ncols(M)-1]...)))
-toric_root_bound(A, L, check_transversality=true)
-toric_lower_bound_of_maximal_positive_root_count(A, L)
+toric_root_bound(A, F, check_transversality=true)
+toric_lower_bound_of_maximal_positive_root_count(A, F)
 
 #2-site phosphorylation
 rn = Catalyst.@reaction_network begin
@@ -133,12 +134,17 @@ end
 b = [1811, 1135, 4769]
 k = [744, 59, 746, 120, 270, 517, 377, 798, 632, 431, 722, 333]
 h = [259, 800, 750, 684, 363, 120, 524, 616]
-C, M, L = steady_state_system(rn)
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+F = steady_state_system(rn)
 
-toric_root_bound(A, L, check_transversality=false)
-toric_lower_bound_of_maximal_positive_root_count(A, L)
+steady_state_degree(rn)
 
+C, M, L, A = multisite_phosphorylation_matrices(2)
+F = AugmentedVerticalSystem(C, M, L)
+generic_root_count(F)
+
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h)
+toric_lower_bound_of_maximal_positive_root_count(A, F)
+toric_root_bound(A, F, check_transversality=false)
 
 # Wnt pathway
 rn = @reaction_network begin
@@ -175,8 +181,7 @@ rn = @reaction_network begin
   k31, X11         --> X10
 end;
 
-C, M, L = steady_state_system(rn)
-F = augmented_vertical_system(C, M, L)
+F = steady_state_system(rn)
 mixed_volume(F)
 @time sd = steady_state_degree(rn; verbose=true)
 
@@ -193,4 +198,5 @@ M = matrix(ZZ, [
     0  0  0  0  0  0  0  0  0  0  0  0  0  1  1 0  0
 ])
 
-generic_root_count(C, M)
+F = AugmentedVerticalSystem(C, M)
+generic_root_count(F)

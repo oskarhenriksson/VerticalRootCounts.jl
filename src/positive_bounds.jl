@@ -61,7 +61,7 @@ julia> lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
 ```
 """
 function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
-    C::QQMatrix, M::ZZMatrix, L::QQMatrix,
+    F::AugmentedVerticalSystem,
     b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     a_spec::Union{Vector{Int},Vector{QQFieldElem}},
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
@@ -70,19 +70,21 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     verbose::Bool=false
 )
 
-    n = nrows(M) #number of variables
-    m = ncols(M) #number of parameters
-    s = rank(C) #rank
-    d = n-s #corank
+    # Minimal presentation
+    C_tilde, M_tilde = F.C_tilde, F.M_tilde
 
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde)
+    # Symbolic coefficient matrix for the augmentation part
+    Lb = F.Lb 
 
-    @req nrows(L) == d "L must have the same number of rows as the corank of C"
+    # Dimensions
+    n, m, d, r = F.n, F.m, F.d, F.r
+
+    # Check that the input is compatbile with the system
     @req length(b_spec) == d "b_spec must have same length as the number of rows of L"
-    @req length(h) == r "h must have same length as the number of columns of M_tilde"
+    @req length(h) == r "h must have same length as the number of monomials"
     @req length(a_spec) == m "a_spec must have same length as the number of columns of M"
 
+    # Set up valuated field for tropicalization
     K, t = rational_function_field(QQ,"t")
     nu = tropical_semiring_map(K,t)
     R, x, z, y = polynomial_ring(K, "x"=>1:n, "z"=>1:1, "y"=>1:r)
@@ -94,8 +96,6 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
         verbose && @info "Tropical binomial variety computed"
     end
 
-    B, b = rational_function_field(QQ, "b"=>1:d)
-    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     @req check_genericity_of_specialization(Lb, b_spec) "b_spec must be generic"
     Lb_spec = evaluate.(Lb, Ref(b_spec))
 
@@ -117,18 +117,12 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
 
     # Count how many of the tropical points that are positive
     Ilin = ideal(R, C_tilde_spec*y) + ideal(R, Lb_spec*vcat(x,z))
-
     normalized_points = (lcm(denominator.(p)) .* p for p in result.points)
-
     return count(
         Oscar.is_initial_positive(Ilin, nu, p)
         for p in normalized_points
     )
 end
-
-lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F::AugmentedVerticalSystem, b_spec, a_spec, h; kwargs...) = 
-    lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F.C, F.M, F.L, b_spec, a_spec, h; kwargs...)
-
 
 @doc raw"""
     lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
@@ -143,7 +137,7 @@ in the space of auxiliary variables in the modification.
 
 
 """
-function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)); 
+function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
     num_b_k_attempts::Int=5, 
     num_h_attempts_per_b_k::Int=10, 
     show_progress::Bool=true,
@@ -151,20 +145,20 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
     verbose::Bool=false
 )
 
-    n = nrows(M) #number of variables
-    m = ncols(M) #number of parameters
-    s = rank(C) #rank
-    d = n-s #corank
+    # Minimal presentation
+    C_tilde, M_tilde = F.C_tilde, F.M_tilde
 
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde)
+    # Matrices for the augmentation part
+    L = F.L
+    Lb = F.Lb 
+
+    # Dimensions
+    n, m, d, r = F.n, F.m, F.d, F.r
 
     # Check whether there are nondegenerate zeros at all
-    if !has_nondegenerate_zero(C, M, L)
+    if !has_nondegenerate_zero(F)
         return PositiveRootBound(0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r), nothing, nothing)
     end
-
-    @req nrows(L) == d "L must have the same number of rows as the corank of C"
 
     # Tropicalize the binomial part of the modified system
     K, t = rational_function_field(QQ,"t")
@@ -191,8 +185,6 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         enabled = show_progress
     );
 
-    B, b = rational_function_field(QQ, "b"=>1:d)
-    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     for b_k_attempt=1:num_b_k_attempts
 
         # Pick a generic b
@@ -232,7 +224,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
                 try
                     h = rand(1:max_entry_size, r)
                     new_count = lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
-                        C, M, L, b_spec, a_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
+                        F, b_spec, a_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
                     )
                     generic_perturbation = true
                 catch err
@@ -265,8 +257,6 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
     return PositiveRootBound(best_count, best_b, best_k, best_h, TropB, best_TropL)
 end
 
-lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem; kwargs...) =
-    lower_bound_of_maximal_positive_root_count(F.C, F.M, F.L; kwargs...)
 
 @doc raw"""
     lower_bound_of_maximal_positive_steady_state_count(rn::ReactionSystem; kwargs...)
