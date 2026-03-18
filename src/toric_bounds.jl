@@ -120,6 +120,8 @@ struct ToricPositiveRootBound
     bound::Int
     b_spec::Vector{QQFieldElem}
     h::Vector{QQFieldElem}
+    TropB::TropicalVariety
+    TropL::TropicalLinearSpace
 end
 
 function Base.show(io::IO, ::MIME"text/plain", r::ToricPositiveRootBound)
@@ -157,6 +159,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
     best_count = 0
     best_b = nothing 
     best_h = nothing
+    best_TropL = nothing
     progress = ProgressMeter.Progress(num_b_attempts; 
         dt=0.4, 
         desc="Trying parameter values...", 
@@ -210,6 +213,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
                 best_count = new_count
                 best_b = b_spec
                 best_h = h
+                best_TropL = TropL
             end
         end
 
@@ -221,6 +225,6 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
             ]
         )
     end
-    return ToricPositiveRootBound(best_count, best_b, best_h)
+    return ToricPositiveRootBound(best_count, best_b, best_h, Trop_toric, best_TropL)
 end
 

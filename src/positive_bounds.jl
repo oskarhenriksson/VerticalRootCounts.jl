@@ -14,6 +14,8 @@ struct PositiveRootBound
     b_spec
     k_spec
     h
+    TropB::Union{TropicalVariety,Nothing}
+    TropL::Union{TropicalLinearSpace,Nothing}
 end
 function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBound)
     header = "Positive tropical root bound"
@@ -124,6 +126,9 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     )
 end
 
+lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F::AugmentedVerticalSystem, b_spec, k_spec, h; kwargs...) = 
+    lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F.C, F.M, F.L, b_spec, k_spec, h; kwargs...)
+
 
 @doc raw"""
     lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
@@ -156,7 +161,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
 
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(C, M, L)
-        return PositiveRootBound(0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r))
+        return PositiveRootBound(0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r), nothing, nothing)
     end
 
     @req nrows(L) == d "L must have the same number of rows as the corank of C"
@@ -176,6 +181,8 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
     best_b = nothing
     best_k = nothing
     best_h = nothing
+    best_TropL = nothing
+
     progress = ProgressMeter.Progress(num_b_k_attempts; 
         dt=0.4, 
         desc="Trying parameter values...", 
@@ -243,6 +250,7 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
                 best_b = b_spec
                 best_k = k_spec
                 best_h = h
+                best_TropL = TropL
             end
         end
 
@@ -254,8 +262,11 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
             ]
         )
     end
-    return PositiveRootBound(best_count, best_b, best_k, best_h)
+    return PositiveRootBound(best_count, best_b, best_k, best_h, TropB, best_TropL)
 end
+
+lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem; kwargs...) =
+    lower_bound_of_maximal_positive_root_count(F.C, F.M, F.L; kwargs...)
 
 @doc raw"""
     lower_bound_of_maximal_positive_steady_state_count(rn::ReactionSystem; kwargs...)
@@ -264,4 +275,4 @@ end
     that a mass action network `rn` can have.
 """
 lower_bound_of_maximal_positive_steady_state_count(rn::ReactionSystem; kwargs...) = 
-    lower_bound_of_maximal_positive_root_count(steady_state_system(rn)...; kwargs...)
+    lower_bound_of_maximal_positive_root_count(steady_state_system(rn); kwargs...)
