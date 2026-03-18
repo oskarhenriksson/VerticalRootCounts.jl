@@ -25,12 +25,16 @@ using VerticalRootCounts
     @test steady_state_degree(rn, check_transversality=true) == 3
     @test steady_state_degree(rn, check_transversality=false) == 3
 
+    a = [83, 56, 13]
     b = [71]
-    k = [83, 56, 13]
     h = [37,97,18]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 3
+    result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
+    @test result.bound == 3
+
+    result = lower_bound_of_maximal_positive_root_count(F, num_a_b_attempts=5, num_h_attempts_per_a_b=5)
+    @test result.bound == 3
     
-    result = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
+    result = lower_bound_of_maximal_positive_steady_state_count(rn, num_a_b_attempts=3, num_h_attempts_per_a_b=3)
     @test result.bound == 3
     
 end
@@ -69,10 +73,11 @@ end
     @test steady_state_degree(rn) == 2
 
     F = steady_state_system(rn)
+    a = [284, 215, 921, 770, 883, 792]
     b = [69, 42, 81]
-    k = [284, 215, 921, 770, 883, 792]
     h = [12, 86, 11, 27, 84]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 2
+    result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
+    @test result.bound == 2
 
 end
 
@@ -92,10 +97,11 @@ end
     @test steady_state_degree(rn) == 3
 
     F = steady_state_system(rn)
+    a = [84, 46, 30, 13, 23, 68]
     b = [59, 34]
-    k = [84, 46, 30, 13, 23, 68]
     h = [834, 131, 91, 217, 253, 498]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 3
+    result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
+    @test result.bound == 3
 
 end
 
@@ -118,10 +124,11 @@ end
 
     @test generic_degree(AugmentedVerticalSystem(F.C, F.M)) == 4
 
+    a = [84, 46, 30, 13, 23, 68]
     b = [68, 52, 99]
-    k = [84, 46, 30, 13, 23, 68]
     h = [79, 26, 89, 92]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(F, b, k, h) == 1
+    result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
+    @test result.bound == 1
 
     M = F.M
     A = kernel(matrix(ZZ, hcat([M[:, i] - M[:, ncols(M)] for i=1:ncols(M)-1]...)))
@@ -129,7 +136,8 @@ end
     @test toric_root_bound(A, F, check_transversality=false) == 3
 
     h = [936, 145, 170, 323, 169, 271, 439]
-    @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, F, b, h) == 1
+    result = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, F, b, h)
+    @test result.bound == 1
 
 end
 

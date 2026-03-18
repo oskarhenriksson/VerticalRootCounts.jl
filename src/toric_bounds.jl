@@ -19,7 +19,6 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     A_extended = hcat(A, zero_matrix(ZZ,nrows(A),1))
 
     # Pick a generic specialization of the constant terms
-    b_spec = nothing
     if isnothing(b_spec)
         is_generic = false
         while !is_generic
@@ -71,6 +70,25 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
 end
 
 
+
+struct ToricPositiveRootBound
+    bound::Int
+    b_spec::Vector{QQFieldElem}
+    h::Vector{QQFieldElem}
+    TropB::TropicalVariety
+    TropL::TropicalLinearSpace
+end
+
+function Base.show(io::IO, ::MIME"text/plain", r::ToricPositiveRootBound)
+    header = "Toric positive root bound"
+    println(io, header)
+    println(io, "="^(length(header)))
+    println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
+    println(io, " Choice of constant terms b: ", r.b_spec)
+    println(io, " Choice of perturbation h: ", r.h)
+end
+
+
 function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
     A::ZZMatrix, F::AugmentedVerticalSystem,
     b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
@@ -117,29 +135,15 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
     Lb_spec = hcat(L, -matrix(QQ.(b_spec)))
     Ilin = ideal(R, Lb_spec*vcat(x,z))
     normalized_points = (lcm(denominator.(p)) .* p for p in result.points)
-    return count(
+    bound =  count(
         Oscar.is_initial_positive(Ilin, tropical_semiring_map(QQ), p) 
         for p in normalized_points
     )
+    return ToricPositiveRootBound(bound, b_spec, h, Trop_toric, TropL)
 end
 
 
-struct ToricPositiveRootBound
-    bound::Int
-    b_spec::Vector{QQFieldElem}
-    h::Vector{QQFieldElem}
-    TropB::TropicalVariety
-    TropL::TropicalLinearSpace
-end
 
-function Base.show(io::IO, ::MIME"text/plain", r::ToricPositiveRootBound)
-    header = "Toric positive root bound"
-    println(io, header)
-    println(io, "="^(length(header)))
-    println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    println(io, " Choice of constant terms b: ", r.b_spec)
-    println(io, " Choice of perturbation h: ", r.h)
-end
 
 
 function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::AugmentedVerticalSystem; 
@@ -203,9 +207,10 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
             while !generic_perturbation
                 try
                     h = rand(1:max_entry_size, (n+1))
-                    new_count = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
+                    result = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
                         A, F, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
+                    new_count = result.bound
                     generic_perturbation = true
                 catch err
                     if err isa NongenericDirectionError

@@ -1,7 +1,7 @@
 
 export lower_bound_of_maximal_positive_steady_state_count,
     lower_bound_of_maximal_positive_root_count,
-    lower_bound_of_maximal_positive_root_count_fixed_b_k_h
+    lower_bound_of_maximal_positive_root_count_fixed_a_b_h
 
 
 struct NongenericDirectionError <: Exception
@@ -11,8 +11,8 @@ Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
 
 struct PositiveRootBound
     bound::Int
-    b_spec
     a_spec
+    b_spec
     h
     TropB::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
@@ -28,10 +28,10 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBound)
 end
 
 @doc raw"""
-    lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
+    lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
     C::QQMatrix, M::ZZMatrix, L::QQMatrix,
-    b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     a_spec::Union{Vector{Int},Vector{QQFieldElem}},
+    b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
     TropB::Union{TropicalVariety,Nothing}=nothing, 
     TropL::Union{TropicalLinearSpace,Nothing}=nothing,
@@ -52,18 +52,18 @@ julia> L = matrix(QQ, [1 1]);
 
 julia> h = [37,97,18];
 
-julia> k = [839, 562, 13];
+julia> a = [839, 562, 13];
 
 julia> b = [71];
 
-julia> lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+julia> lower_bound_of_maximal_positive_root_count_fixed_a_b_h(C, M, L, a, b, h)
 3
 ```
 """
-function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
+function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
     F::AugmentedVerticalSystem,
-    b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     a_spec::Union{Vector{Int},Vector{QQFieldElem}},
+    b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
     TropB::Union{TropicalVariety,Nothing}=nothing, 
     TropL::Union{TropicalLinearSpace,Nothing}=nothing,
@@ -118,28 +118,29 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     # Count how many of the tropical points that are positive
     Ilin = ideal(R, C_tilde_spec*y) + ideal(R, Lb_spec*vcat(x,z))
     normalized_points = (lcm(denominator.(p)) .* p for p in result.points)
-    return count(
-        Oscar.is_initial_positive(Ilin, nu, p)
+    bound = count(
+        Oscar.is_initial_positive(Ilin, nu, p) 
         for p in normalized_points
     )
+    return PositiveRootBound(bound, a_spec, b_spec, h, TropB, TropL)
 end
 
 @doc raw"""
     lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
-    num_b_k_attempts::Int=5, num_h_attempts_per_b_k::Int=10, verbose::Bool=false)
+    num_a_b_attempts::Int=5, num_h_attempts_per_a_b::Int=10, verbose::Bool=false)
 
 Computes a lower bound on the maximal positive root count of the augmented vertically parametrized 
 system given by the coefficient matrix `C`, the exponent matrix `M`, and the affine form matrix `L`.
 
-The function randomly samples `num_b_k_attempts` choices of the b and k parameters, and
-for each such choice `num_h_attempts_per_b_k` shifts of the tropicalized binomial variety 
+The function randomly samples `num_a_b_attempts` choices of the b and k parameters, and
+for each such choice `num_h_attempts_per_a_b` shifts of the tropicalized binomial variety 
 in the space of auxiliary variables in the modification.
 
 
 """
 function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
-    num_b_k_attempts::Int=5, 
-    num_h_attempts_per_b_k::Int=10, 
+    num_a_b_attempts::Int=5, 
+    num_h_attempts_per_a_b::Int=10, 
     show_progress::Bool=true,
     max_entry_size::Int=1000,
     verbose::Bool=false
@@ -157,7 +158,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
 
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(F)
-        return PositiveRootBound(0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r), nothing, nothing)
+        return PositiveRootBound(0, nothing, nothing, nothing, nothing, nothing)
     end
 
     # Tropicalize the binomial part of the modified system
@@ -172,12 +173,12 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
     # Keep track of the maximal positive root count found and associated b and h values
     # Todo: Make this interruptible!
     best_count = 0
+    best_a = nothing
     best_b = nothing
-    best_k = nothing
     best_h = nothing
     best_TropL = nothing
 
-    progress = ProgressMeter.Progress(num_b_k_attempts; 
+    progress = ProgressMeter.Progress(num_a_b_attempts; 
         dt=0.4, 
         desc="Trying parameter values...", 
         barlen=30,
@@ -185,7 +186,18 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
         enabled = show_progress
     );
 
-    for b_k_attempt=1:num_b_k_attempts
+    for a_b_attempt=1:num_a_b_attempts
+
+        # Pick a generic a
+        a_spec = nothing
+        while true
+            a_spec = rand(1:max_entry_size, m)
+            is_generic = check_genericity_of_specialization(C_tilde, a_spec)
+            if is_generic
+                break
+            end
+        end
+        C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
 
         # Pick a generic b
         b_spec = nothing
@@ -197,17 +209,6 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
             end
         end
         Lb_spec = evaluate.(Lb, Ref(b_spec))
-
-        # Pick a generic k
-        a_spec = nothing
-        while true
-            a_spec = rand(1:max_entry_size, m)
-            is_generic = check_genericity_of_specialization(C_tilde, a_spec)
-            if is_generic
-                break
-            end
-        end
-        C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
     
         # Tropicalize the linear part of the modified system
         linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
@@ -218,14 +219,15 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
         # Compute the stable intersection for different h values
         new_count = nothing 
         h = nothing
-        for h_attempt = 1:num_h_attempts_per_b_k
+        for _ = 1:num_h_attempts_per_a_b
             generic_perturbation = false
             while !generic_perturbation
                 try
                     h = rand(1:max_entry_size, r)
-                    new_count = lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
-                        F, b_spec, a_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
+                    result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
+                        F, a_spec, b_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
                     )
+                    new_count = result.bound
                     generic_perturbation = true
                 catch err
                     if err isa NongenericDirectionError
@@ -237,24 +239,24 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
             end
 
             # Update the current best count
-            if new_count > best_count || isnothing(best_b) || isnothing(best_k) || isnothing(best_h)
+            if new_count > best_count || isnothing(best_b) || isnothing(best_a) || isnothing(best_h)
                 best_count = new_count
+                best_a = a_spec
                 best_b = b_spec
-                best_k = a_spec
                 best_h = h
                 best_TropL = TropL
             end
         end
 
         # Update the progress bar
-        ProgressMeter.update!(progress, b_k_attempt; 
+        ProgressMeter.update!(progress, a_b_attempt; 
             showvalues = [
-                ("Number of b attempts", "$(b_k_attempt) ($(num_b_k_attempts))"), 
+                ("Number of b attempts", "$(a_b_attempt) ($(num_a_b_attempts))"), 
                 ("Current maximal count", best_count)
             ]
         )
     end
-    return PositiveRootBound(best_count, best_b, best_k, best_h, TropB, best_TropL)
+    return PositiveRootBound(best_count, best_a, best_b, best_h, TropB, best_TropL)
 end
 
 
