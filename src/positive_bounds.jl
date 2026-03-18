@@ -11,9 +11,9 @@ Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
 
 struct PositiveRootBound
     bound::Int
-    a_spec
-    b_spec
-    h
+    a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    h::Union{Nothing,Vector{<:Integer}}
     TropB::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
 end
@@ -62,9 +62,9 @@ julia> lower_bound_of_maximal_positive_root_count_fixed_a_b_h(C, M, L, a, b, h)
 """
 function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
     F::AugmentedVerticalSystem,
-    a_spec::Union{Vector{Int},Vector{QQFieldElem}},
-    b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
-    h::Union{Vector{Int},Vector{QQFieldElem}}; 
+    a_spec::Union{Vector{<:Integer},Vector{QQFieldElem}},
+    b_spec::Union{Vector{<:Integer},Vector{QQFieldElem}}, 
+    h::Union{Vector{<:Integer},Vector{QQFieldElem}}; 
     TropB::Union{TropicalVariety,Nothing}=nothing, 
     TropL::Union{TropicalLinearSpace,Nothing}=nothing,
     verbose::Bool=false

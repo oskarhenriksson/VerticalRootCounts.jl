@@ -73,8 +73,8 @@ end
     @test steady_state_degree(rn) == 2
 
     F = steady_state_system(rn)
-    a = [284, 215, 921, 770, 883, 792]
-    b = [69, 42, 81]
+    a = QQ.(1//3 * [284, 215, 921, 770, 883, 792])
+    b = QQ.(1//5 * [69, 42, 81])
     h = [12, 86, 11, 27, 84]
     result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
     @test result.bound == 2
