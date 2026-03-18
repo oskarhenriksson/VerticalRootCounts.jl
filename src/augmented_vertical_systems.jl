@@ -1,5 +1,4 @@
 export minimal_presentation, 
-    augmented_vertical_system,
     has_nondegenerate_zero,
     AugmentedVerticalSystem
 
@@ -14,14 +13,26 @@ struct AugmentedVerticalSystem
     L::QQMatrix
     C_tilde::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}
     M_tilde::ZZMatrix
+    Lb::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}
     system::Vector{<:AbstractAlgebra.Generic.MPoly{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}}
 end
 
+
+
+"""
+    AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
+
+Constructs the augmented vertical system given by a parameter-separating presentation, consisting of
+- a coefficient matrix `C` (size s×m) of full row rank,
+- an exponent matrix `M`, (size n×m), and
+- an augmentation matrix `L` (size d×n) of full row rank.
+
+"""
 function AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
     n = nrows(M) #number of variables
     m = ncols(M) #number of a parameters
     s = rank(C) #rank
-    d = n-s #corank 
+    d = nrows(L) #number of augmenting linear forms
 
     @req nrows(L) == rank(L) "The augmentation matrix L needs to have full row rank"
     @req nrows(C) == rank(C) "The coefficient matrix C needs to have full row rank"
@@ -30,9 +41,13 @@ function AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matr
     C_tilde, M_tilde = minimal_presentation(C, M)
     r = ncols(M_tilde) #number of monomials 
 
-    system = augmented_vertical_system(C, M, L)
+    # Symbolic coefficient matrix for the augmentation of the system
+    B, b = rational_function_field(QQ, "b"=>1:d)
+    Lb = hcat(B.(L), -matrix(B, d, 1, b))
 
-    return AugmentedVerticalSystem(n, m, r, s, d, C, M, L, C_tilde, M_tilde, system)
+    system = oscar_system(C, M, L)
+
+    return AugmentedVerticalSystem(n, m, r, s, d, C, M, L, C_tilde, M_tilde, Lb, system)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", F::AugmentedVerticalSystem)
@@ -47,7 +62,7 @@ function Base.show(io::IO, ::MIME"text/plain", F::AugmentedVerticalSystem)
     end
 end
 
-function augmented_vertical_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
+function oscar_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
 
     AB, a, b = rational_function_field(QQ, "a"=>1:ncols(M), "b"=>1:nrows(L))
     R, x = polynomial_ring(AB, "x"=>1:nrows(M))
