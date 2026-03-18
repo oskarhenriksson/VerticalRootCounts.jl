@@ -1,3 +1,9 @@
+struct StableIntersectionResult
+    points::Vector{QQFieldElem}
+    multiplicities::Vector{Int}
+    perturbation::Vector{<:Integer}
+    is_transverse::Bool
+end
 
 @doc raw"""
     perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety; perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
@@ -54,11 +60,11 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
             firstZero = findfirst(isequal(0), solution)
             if (firstZero != nothing) && (firstZero[2] <= nRaysPerCone)
                 # random direction not generic, lies on the boundary of the cone
-                return (
-                    perturbation = perturbation,
-                    is_transversal = false,
-                    points = stableIntersectionPoints,
-                    multiplicities = stableIntersectionMults
+                return StableIntersectionResult(
+                    stableIntersectionPoints,
+                    stableIntersectionMults,
+                    perturbation,
+                    false
                 )
             end
             firstNegative = findfirst(a -> (a < 0), solution)
@@ -76,11 +82,11 @@ function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
         end
     end
  
-    return (
-        perturbation = perturbation,
-        is_transversal = true,
-        points = stableIntersectionPoints,
-        multiplicities = stableIntersectionMults
+    return StableIntersectionResult(
+        stableIntersectionPoints,
+        stableIntersectionMults,
+        perturbation,
+        true
     )
 end
 
