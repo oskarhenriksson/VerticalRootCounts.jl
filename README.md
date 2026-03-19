@@ -52,17 +52,17 @@ julia> generic_root_count(F)
 Result of generic root count computation
 ========================================
  Generic root count: 3
+ Computation method: mixed volume of cotransversal presentation
  Choice of parameters a: [982, 332, 647, 886, 866, 326]
  Choice of constant terms b: [2110, 1837, 826]
- Computation method: mixed volume of cotransversal presentation
 
 julia> generic_root_count(F; check_cotransversality=false)
 Result of generic root count computation
 ========================================
  Generic root count: 3
+ Computation method: stable intersection of binomial and linear parts
  Choice of parameters a: [836, 343, 970, 876, 458, 272]
  Choice of constant terms b: [1667, 826, 1664]
- Computation method: stable intersection of binomial and linear parts
  Computation of perturbation h: [-17615, -18571, -12785, -9616, -23690, -12039, -914, 3718, 615, 16508, 30700]
 
 ```
@@ -74,9 +74,11 @@ julia> lower_bound_of_maximal_positive_root_count(F)
 Result of positive tropical root bound computation
 ==================================================
  Lower bound on the maximal number of positive roots: 1
- Choice of parameters a: [271, 779, 555, 109, 770, 460]
- Choice of constant terms b: [1319, 1004, 837]
- Choice of perturbation h: [271, 779, 898, 865]
+ Computation method: stable intersection of binomial and linear parts
+ Choice of parameters a: [759, 419, 322, 789, 164, 751]
+ Choice of constant terms b: [1778, 1714, 282]
+ Choice of perturbation h: [703, 36, 714, 589]
+
 ```
 
 To make use of toricity with respect to a known exponent matrix `A`, we instead use the `toric_root_bound` command:
@@ -88,16 +90,16 @@ julia> toric_root_bound(A, F)
 Result of toric root bound computation
 ======================================
  Toric root bound: 3
- Choice of constant terms b: [18844, -47913, -6635]
  Computation method: mixed volume for cotransversal presentation
+ Choice of constant terms b: [18844, -47913, -6635]
 
-julia> toric_root_bound(A, F; check_cotransversality=false)
-Result of toric root bound computation
-======================================
- Toric root bound: 3
- Choice of constant terms b: [-16856, -2884, 19205]
+julia> toric_lower_bound_of_maximal_positive_root_count(A, F)
+Result of positive toric root bound computation
+===============================================
+ Lower bound on the maximal number of positive roots: 1
  Computation method: stable intersection of binomial and linear parts
- Choice of perturbation h: [-28967, 16168, 20140, 28439, 7112, 10476, -893]
+ Choice of constant terms b: [2057, 1508, 1027]
+ Choice of perturbation h: [745, 115, 331, 500, 485, 906, 747]
 
 ```
 
@@ -118,14 +120,15 @@ julia> steady_state_degree(rn)
 Result of generic root count computation
 ========================================
  Generic root count: 3
+ Computaion method: mixed volume of cotransversal presentation
  Choice of parameters a: [854, 96, 139, 19, 404, 89]
  Choice of constant terms b: [2584, 951, 1585]
- Computaion method: mixed volume of cotransversal presentation
 
 julia> lower_bound_of_maximal_positive_steady_state_count(rn)
 Result of positive tropical root bound computation
 ==================================================
  Lower bound on the maximal number of positive roots: 1
+ Computation method: stable intersection of binomial and linear parts
  Choice of parameters a: [724, 851, 433, 573, 189, 272]
  Choice of constant terms b: [1211, 1284, 828]
  Choice of perturbation h: [463, 297, 715, 564]

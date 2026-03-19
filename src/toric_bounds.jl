@@ -18,13 +18,17 @@ function Base.show(io::IO, ::MIME"text/plain", r::ToricRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Toric root bound: ", r.bound)
-    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :degeneracy
         println(io, " Computation method: degeneracy")
-    elseif r.method == :cotransversality
+        return
+    end
+    if r.method == :cotransversality 
         println(io, " Computation method: mixed volume for cotransversal presentation")
     elseif r.method == :stable_intersection
-        println(io, " Computation method: stable intersection of binomial and linear parts")
+            println(io, " Computation method: stable intersection of binomial and linear parts")
+    end
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    if r.method == :stable_intersection
         println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
@@ -109,6 +113,7 @@ struct PositiveToricRootBoundResult
     bound::Int
     b_spec::Vector{QQFieldElem}
     h::Vector{QQFieldElem}
+    method::Symbol
     TropB::TropicalVariety
     TropL::TropicalLinearSpace
     stable_intersection::Union{StableIntersectionResult,Nothing}
@@ -119,8 +124,13 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveToricRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
-    println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    if r.method == :degeneracy
+        println(io, " Computation method: degeneracy")
+    elseif r.method == :stable_intersection
+        println(io, " Computation method: stable intersection of binomial and linear parts")
+        println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+        println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    end
 end
 
 
@@ -174,7 +184,7 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         Oscar.is_initial_positive(Ilin, tropical_semiring_map(QQ), p) 
         for p in normalized_points
     )
-    return PositiveToricRootBoundResult(bound, b_spec, h, Trop_toric, TropL, Σ)
+    return PositiveToricRootBoundResult(bound, b_spec, h, :stable_intersection, Trop_toric, TropL, Σ)
 end
 
 
@@ -193,6 +203,18 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
     L, Lb = F.L, F.Lb
     @req ncols(A) == n "Number of columns of A needs to match the number of variables in the system"
     @req rank(A) == d "System needs to be effectively square"
+
+    if !has_nondegenerate_zero(F)
+        return PositiveToricRootBoundResult(
+            0, 
+            nothing, 
+            nothing, 
+            :degeneracy,
+            nothing, 
+            nothing, 
+            nothing
+        )
+    end
 
     R, x, z = polynomial_ring(QQ, "x"=>1:n, "z"=>1:1)
 

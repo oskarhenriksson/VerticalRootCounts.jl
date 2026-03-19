@@ -19,16 +19,18 @@ function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
     println(io, "="^(length(header)))
     println(io, " Generic root count: ", r.count)
     if r.method == :degeneracy
-        println(io, " Method: degeneracy")
+        println(io, " Computation method: degeneracy")
         return
     end
-    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
-    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :cotransversality
         println(io, " Computation method: mixed volume for cotransversal presentation")
     elseif r.method == :stable_intersection
         println(io, " Computation method: stable intersection of binomial and linear parts")
-        println(io, "  Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    end
+    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    if r.method == :stable_intersection
+        println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
 

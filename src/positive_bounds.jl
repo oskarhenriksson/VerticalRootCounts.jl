@@ -24,10 +24,13 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    if r.method != :degeneracy
+    if r.method == :degeneracy
+        println(io, " Computation method: degeneracy")
+    elseif r.method == :stable_intersection
+        println(io, " Computation method: stable intersection of binomial and linear parts")
         println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
         println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
-        print(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+        println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
 
