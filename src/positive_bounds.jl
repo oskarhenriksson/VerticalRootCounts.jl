@@ -29,7 +29,7 @@ end
 
 @doc raw"""
     lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
-    C::QQMatrix, M::ZZMatrix, L::QQMatrix,
+    F::AugmentedVerticalSystem,
     a_spec::Union{Vector{Int},Vector{QQFieldElem}},
     b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
     h::Union{Vector{Int},Vector{QQFieldElem}}; 
@@ -50,14 +50,21 @@ julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
 
 julia> L = matrix(QQ, [1 1]);
 
+julia> F = AugmentedVerticalSystem(C, M, L);
+
 julia> h = [37,97,18];
 
 julia> a = [839, 562, 13];
 
 julia> b = [71];
 
-julia> lower_bound_of_maximal_positive_root_count_fixed_a_b_h(C, M, L, a, b, h)
-3
+julia> lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
+Result of positive tropical root bound computation
+==================================================
+ Lower bound on the maximal number of positive roots: 3
+ Choice of constant terms b: [71]
+ Choice of parameters k: [839, 562, 13]
+ Choice of perturbation h: [37, 97, 18]
 ```
 """
 function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(

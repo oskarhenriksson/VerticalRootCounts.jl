@@ -9,6 +9,7 @@ struct GenericRootCountResult
     method::Symbol
     TropB::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
+    h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
     stable_intersection::Union{StableIntersectionResult,Nothing}
 end
 
@@ -17,15 +18,15 @@ function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Generic root count: ", r.count)
-    println(io, " Choice of constant terms b: ", r.b_spec)
-    println(io, " Choice of parameters k: ", r.a_spec)
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    println(io, " Choice of parameters k: ", "[", join(r.a_spec, ", "), "]")
     if r.method == :degeneracy
-        println(io, " Computed method: degeneracy")
+        println(io, " Computation method: degeneracy")
     elseif r.method == :cotransversality
         println(io, " Computation method: mixed volume")
     elseif r.method == :stable_intersection
         println(io, " Computed method: stable intersection")
-        println(io, " Choice of perturbation h: ", r.stable_intersection.perturbation)
+        println(io, " Computation of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
 
@@ -38,25 +39,36 @@ generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix;
     check_transversality::Bool=true, 
     verbose::Bool=false)
 
-   Compute the generic root count of an augmented vertical system `F`.
+Compute the generic root count of an augmented vertical system `F`.
 
-    # Example
-    ```jldoctest
-    julia> C = matrix(QQ, [1 -1 -1]);
+# Example
 
-    julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
- 
-    julia> L = matrix(QQ, [1 1]);
+```jldoctest
+julia> C = matrix(QQ, [1 -1 -1]);
 
-    julia> F = AugmentedVerticalSystem(C, M, L);
+julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
 
-    julia> generic_root_count(F)
-    3
+julia> L = matrix(QQ, [1 1]);
 
-    julia> generic_root_count(F, check_transversality=false)
-    3
-    ```
+julia> F = AugmentedVerticalSystem(C, M, L);
 
+julia> generic_root_count(F)
+Result of generic root count computation
+========================================
+ Generic root count: 3
+ Choice of constant terms b: [503]
+ Choice of parameters k: [802, 980, 905]
+ Computation method: mixed volume
+
+julia> generic_root_count(F, check_transversality=false)
+Result of generic root count computation
+========================================
+ Generic root count: 3
+ Choice of constant terms b: QQFieldElem[636]
+ Choice of parameters k: [854, 593, 711]
+ Computation method: stable intersection
+ Choice of perturbation h: Int16[-14763, 25201, -30895, 15903, -31687, -7376]
+```
 """
 function generic_root_count(F::AugmentedVerticalSystem;
         b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
@@ -68,7 +80,16 @@ function generic_root_count(F::AugmentedVerticalSystem;
 
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(F)
-        return GenericRootCountResult(0, nothing, nothing, :degeneracy, nothing, nothing, nothing)
+        return GenericRootCountResult(
+            0, 
+            nothing, 
+            nothing, 
+            :degeneracy, 
+            nothing, 
+            nothing,
+            nothing, 
+            nothing
+        )
     end
 
     C, M, L = F.C, F.M, F.L #defining matrices
@@ -113,7 +134,16 @@ function generic_root_count(F::AugmentedVerticalSystem;
             nonlinear_supports = Matrix{Int}[Matrix{Int}(M_tilde[:,indices]) for indices in tp_nonlinear]
             affine_supports =  Matrix{Int}[hcat([i in 1:n ? standard_vector(i, n) : zeros(Int, n) for i in indices]...) for indices in tp_affine]
             supports = vcat(nonlinear_supports, affine_supports)
-            return GenericRootCountResult(mixed_volume(supports), a_spec, b_spec, :cotransversality, nothing, nothing, nothing)
+            return GenericRootCountResult(
+                mixed_volume(supports), 
+                a_spec, 
+                b_spec, 
+                :cotransversality, 
+                nothing, 
+                nothing,
+                nothing, 
+                nothing
+            )
         end
     end
 
@@ -132,15 +162,21 @@ function generic_root_count(F::AugmentedVerticalSystem;
     verbose && @info "Tropical binomial variety computed"
  
     # Run perturb_and_intersect_if_transversal until done
-    rootCountComputed = false
-    mults = Int[]
     Σ = nothing
-    while !rootCountComputed
+    while true
         Σ = perturb_and_intersect_if_transversal(TropL, TropB)
-        rootCountComputed = Σ.is_transverse
-        mults = Σ.multiplicities
+        Σ.is_transverse && break
     end
-    return GenericRootCountResult(sum(mults), a_spec, b_spec, :stable_intersection, TropB, TropL, Σ)
+    return GenericRootCountResult(
+        sum(Σ.multiplicities),
+        a_spec, 
+        b_spec, 
+        :stable_intersection,
+        TropB,
+        TropL,
+        Σ.perturbation,
+        Σ
+    )
 end
 
 
@@ -158,7 +194,12 @@ julia> rn = @reaction_network begin
 end;
 
 julia> steady_state_degree(rn)
-3
+Result of generic root count computation
+========================================
+ Generic root count: 3
+ Choice of constant terms b: QQFieldElem[360]
+ Choice of parameters k: [530, 377, 969]
+ Computation method: mixed volume
 ````
 
 """

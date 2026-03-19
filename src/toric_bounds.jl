@@ -9,6 +9,7 @@ struct ToricRootBoundResult
     method::Symbol
     Trop_toric::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
+    h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
     stable_intersection::Union{StableIntersectionResult,Nothing}
 end
 
@@ -17,14 +18,14 @@ function Base.show(io::IO, ::MIME"text/plain", r::ToricRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Toric root bound: ", r.bound)
-    println(io, " Choice of constant terms b: ", r.b_spec)
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :degeneracy
         println(io, " Computed method: degeneracy")
     elseif r.method == :cotransversality
         println(io, " Computation method: mixed volume")
     elseif r.method == :stable_intersection
         println(io, " Computed method: stable intersection")
-        println(io, " Choice of perturbation h: ", r.stable_intersection.perturbation)
+        println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
 
@@ -57,7 +58,7 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
 
     # Nondegeneracy check
     if !has_nondegenerate_zero(Lb_spec, A_extended)
-        return ToricRootBoundResult(0, b_spec, :degeneracy, nothing, nothing, nothing)
+        return ToricRootBoundResult(0, b_spec, :degeneracy, nothing, nothing, nothing, nothing)
     end
 
     # Check for transversality
@@ -69,7 +70,7 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
             supports_shifted = [S .- min.(0, vec(minimum(S, dims=2))) for S in supports];
             degA = Int(prod(diagonal(snf(A))))
             bound = Int(mixed_volume(supports_shifted)/degA)
-            return ToricRootBoundResult(bound, b_spec, :cotransversality, nothing, nothing, nothing)
+            return ToricRootBoundResult(bound, b_spec, :cotransversality, nothing, nothing, nothing, nothing)
         end
     end
 
@@ -85,15 +86,21 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     verbose && @info "Tropicalization of toric variety computed"
    
     # Stable intersection
-    rootCountComputed = false
-    mults = Int[]
     Σ = nothing
-    while !rootCountComputed
+    while true
         Σ = perturb_and_intersect_if_transversal(TropL, Trop_toric)
-        rootCountComputed = Σ.is_transverse
-        mults = Σ.multiplicities
+        Σ.is_transverse && break
     end
-    return ToricRootBoundResult(sum(mults), b_spec, :stable_intersection, Trop_toric, TropL, Σ)
+    
+    return ToricRootBoundResult(
+        sum(Σ.multiplicities), 
+        b_spec, 
+        :stable_intersection, 
+        Trop_toric, 
+        TropL, 
+        Σ.perturbation,
+        Σ
+    )
 end
 
 
