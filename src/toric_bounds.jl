@@ -91,7 +91,7 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
         Σ = perturb_and_intersect_if_transversal(TropL, Trop_toric)
         Σ.is_transverse && break
     end
-    
+
     return ToricRootBoundResult(
         sum(Σ.multiplicities), 
         b_spec, 
@@ -111,6 +111,7 @@ struct PositiveToricRootBoundResult
     h::Vector{QQFieldElem}
     TropB::TropicalVariety
     TropL::TropicalLinearSpace
+    stable_intersection::Union{StableIntersectionResult,Nothing}
 end
 
 function Base.show(io::IO, ::MIME"text/plain", r::PositiveToricRootBoundResult)
@@ -159,21 +160,21 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         verbose && @info "Tropicalization of toric variety computed"
     end
 
-    result = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    Σ = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
     
-    if !result.is_transverse 
+    if !Σ.is_transverse 
         throw(NongenericDirectionError("Input perturbation not generic"))
     end
 
     # Count how many of the tropical points that are positive
     Lb_spec = hcat(L, -matrix(QQ.(b_spec)))
     Ilin = ideal(R, Lb_spec*vcat(x,z))
-    normalized_points = (lcm(denominator.(p)) .* p for p in result.points)
+    normalized_points = (lcm(denominator.(p)) .* p for p in Σ.points)
     bound =  count(
         Oscar.is_initial_positive(Ilin, tropical_semiring_map(QQ), p) 
         for p in normalized_points
     )
-    return PositiveToricRootBoundResult(bound, b_spec, h, Trop_toric, TropL)
+    return PositiveToricRootBoundResult(bound, b_spec, h, Trop_toric, TropL, Σ)
 end
 
 
@@ -204,10 +205,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
     # Try different choices of b and h
     # Keep track of the maximal positive root count found and associated b and h values
     # Todo: Make this interruptible!
-    best_count = 0
-    best_b = nothing 
-    best_h = nothing
-    best_TropL = nothing
+    best_result = nothing
     progress = ProgressMeter.Progress(num_b_attempts; 
         dt=0.4, 
         desc="Trying parameter values...", 
@@ -234,17 +232,15 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
         verbose && @info "Tropical linear space computed"
     
         # Compute the stable intersection for different h values
-        new_count = nothing 
-        h = nothing
-        for h_attempt = 1:num_h_attempts_per_b
+        new_result = nothing 
+        for _ = 1:num_h_attempts_per_b
             generic_perturbation = false
             while !generic_perturbation
                 try
                     h = rand(1:max_entry_size, (n+1))
-                    result = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
+                    new_result = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
                         A, F, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
-                    new_count = result.bound
                     generic_perturbation = true
                 catch err
                     if err isa NongenericDirectionError
@@ -256,11 +252,8 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
             end
               
             # Update the current best count
-            if new_count > best_count || isnothing(best_b) || isnothing(best_h)
-                best_count = new_count
-                best_b = b_spec
-                best_h = h
-                best_TropL = TropL
+            if isnothing(best_result) || new_result.bound > best_result.bound
+                best_result = new_result
             end
         end
 
@@ -268,10 +261,9 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
         ProgressMeter.update!(progress, b_attempt; 
             showvalues = [
                 ("Number of b attempts", "$(b_attempt) ($(num_b_attempts))"), 
-                ("Current maximal count", best_count)
+                ("Current maximal count", best_result.bound)
             ]
         )
     end
-    return PositiveToricRootBoundResult(best_count, best_b, best_h, Trop_toric, best_TropL)
+    return best_result
 end
-
