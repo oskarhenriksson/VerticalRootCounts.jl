@@ -91,7 +91,7 @@ Result of toric root bound computation
  Choice of constant terms b: [18844, -47913, -6635]
  Computation method: mixed volume for cotransversal presentation
 
-julia> julia> toric_root_bound(A, F; check_cotransversality=false)
+julia> toric_root_bound(A, F; check_cotransversality=false)
 Result of toric root bound computation
 ======================================
  Toric root bound: 3

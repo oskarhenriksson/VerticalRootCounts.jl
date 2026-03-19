@@ -18,11 +18,13 @@ function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Generic root count: ", r.count)
-    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
-    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :degeneracy
         println(io, " Method: degeneracy")
-    elseif r.method == :cotransversality
+        return
+    end
+    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    if r.method == :cotransversality
         println(io, " Computation method: mixed volume for cotransversal presentation")
     elseif r.method == :stable_intersection
         println(io, " Computation method: stable intersection of binomial and linear parts")
@@ -217,10 +219,14 @@ function generic_degree(F)
     end
 
     # Augment the system to a square system by an L with full support
-    L_generic = matrix(QQ, rand(Int16, n-s, n))
-
     # Check that the matroid is uniform (all Plücker coordinates are nonzero)
-    all(!is_zero, minors(L_generic, nrows(L_generic)))
+    L_generic = nothing
+    while true
+        L_generic = matrix(QQ, rand(Int16, n-s, n))
+        if all(!is_zero, minors(L_generic, nrows(L_generic)))
+            break
+        end
+    end
 
     F_augmented = AugmentedVerticalSystem(F.C, F.M, L_generic)
 

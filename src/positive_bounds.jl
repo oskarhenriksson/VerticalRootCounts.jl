@@ -16,7 +16,7 @@ struct PositiveRootBoundResult
     method::Symbol
     TropB::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
-    h::Union{Nothing,Vector{<:Integer}}    
+    h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}    
     stable_intersection::Union{StableIntersectionResult,Nothing}
 end
 function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
@@ -24,9 +24,11 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
-    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
-    print(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    if r.method != :degeneracy
+        println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
+        println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+        print(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    end
 end
 
 @doc raw"""

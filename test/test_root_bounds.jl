@@ -49,7 +49,10 @@ end
     
     @test generic_root_count(F, check_cotransversality=true).count == 0
     @test generic_root_count(F, check_cotransversality=false).count == 0
+    @test_nowarn sprint(show, MIME("text/plain"), generic_root_count(F, check_cotransversality=true))
     @test lower_bound_of_maximal_positive_root_count(F).bound == 0
+    @test_nowarn sprint(show, MIME("text/plain"), lower_bound_of_maximal_positive_root_count(F))
+
 
 end
 
