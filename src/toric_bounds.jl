@@ -119,8 +119,8 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveToricRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    println(io, " Choice of constant terms b: ", r.b_spec)
-    println(io, " Choice of perturbation h: ", r.h)
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
 end
 
 

@@ -24,9 +24,9 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    println(io, " Choice of constant terms b: ", r.b_spec)
-    println(io, " Choice of parameters k: ", r.a_spec)
-    print(io, " Choice of perturbation h: ", r.h)
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
+    print(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
 end
 
 @doc raw"""
@@ -65,7 +65,7 @@ Result of positive tropical root bound computation
 ==================================================
  Lower bound on the maximal number of positive roots: 3
  Choice of constant terms b: [71]
- Choice of parameters k: [839, 562, 13]
+ Choice of parameters a: [839, 562, 13]
  Choice of perturbation h: [37, 97, 18]
 ```
 """
