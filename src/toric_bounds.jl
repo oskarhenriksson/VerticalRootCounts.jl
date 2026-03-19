@@ -20,18 +20,18 @@ function Base.show(io::IO, ::MIME"text/plain", r::ToricRootBoundResult)
     println(io, " Toric root bound: ", r.bound)
     println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :degeneracy
-        println(io, " Computed method: degeneracy")
+        println(io, " Computation method: degeneracy")
     elseif r.method == :cotransversality
-        println(io, " Computation method: mixed volume")
+        println(io, " Computation method: mixed volume for cotransversal presentation")
     elseif r.method == :stable_intersection
-        println(io, " Computed method: stable intersection")
+        println(io, " Computation method: stable intersection of binomial and linear parts")
         println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
 
 function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     b_spec::Union{Nothing,Vector{Int},Vector{QQFieldElem}}=nothing,
-    check_transversality::Bool=true,
+    check_cotransversality::Bool=true,
     verbose::Bool=false
 )
 
@@ -62,7 +62,7 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     end
 
     # Check for transversality
-    if check_transversality
+    if check_cotransversality
         tp = transversal_presentation(Lb_spec)
         if tp != false
             verbose && @info "Transversal presentation found"

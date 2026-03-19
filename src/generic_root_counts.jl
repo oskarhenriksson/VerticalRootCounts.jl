@@ -18,15 +18,15 @@ function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Generic root count: ", r.count)
+    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
     println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
-    println(io, " Choice of parameters k: ", "[", join(r.a_spec, ", "), "]")
     if r.method == :degeneracy
-        println(io, " Computation method: degeneracy")
+        println(io, " Method: degeneracy")
     elseif r.method == :cotransversality
-        println(io, " Computation method: mixed volume")
+        println(io, " Computation method: mixed volume for cotransversal presentation")
     elseif r.method == :stable_intersection
-        println(io, " Computed method: stable intersection")
-        println(io, " Computation of perturbation h: ", "[", join(r.h, ", "), "]")
+        println(io, " Computation method: stable intersection of binomial and linear parts")
+        println(io, "  Choice of perturbation h: ", "[", join(r.h, ", "), "]")
     end
 end
 
@@ -36,7 +36,7 @@ end
 generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
     a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
     b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
-    check_transversality::Bool=true, 
+    check_cotransversality::Bool=true, 
     verbose::Bool=false)
 
 Compute the generic root count of an augmented vertical system `F`.
@@ -52,28 +52,17 @@ julia> L = matrix(QQ, [1 1]);
 
 julia> F = AugmentedVerticalSystem(C, M, L);
 
-julia> generic_root_count(F)
-Result of generic root count computation
-========================================
- Generic root count: 3
- Choice of constant terms b: [503]
- Choice of parameters k: [802, 980, 905]
- Computation method: mixed volume
+julia> grc_result = generic_root_count(F);
 
-julia> generic_root_count(F, check_transversality=false)
-Result of generic root count computation
-========================================
- Generic root count: 3
- Choice of constant terms b: QQFieldElem[636]
- Choice of parameters k: [854, 593, 711]
- Computation method: stable intersection
- Choice of perturbation h: Int16[-14763, 25201, -30895, 15903, -31687, -7376]
+julia> grc_result.count
+3
+
 ```
 """
 function generic_root_count(F::AugmentedVerticalSystem;
         b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
         a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
-        check_transversality::Bool=true, 
+        check_cotransversality::Bool=true, 
         verbose::Bool=false)
 
     @req is_square(F) "The system needs to be square (number of rows of C and L need to sum to the number of varialbes)"
@@ -126,7 +115,7 @@ function generic_root_count(F::AugmentedVerticalSystem;
     Lb_spec = evaluate.(Lb, Ref(b_spec))
 
     # Compute the generic root count as a mixed volume if the linear part gives a transversal matroid
-    if check_transversality
+    if check_cotransversality
         tp_nonlinear = transversal_presentation(C_tilde_spec)
         tp_affine = transversal_presentation(Lb_spec)
         if tp_nonlinear != false && tp_affine != false
@@ -193,13 +182,10 @@ julia> rn = @reaction_network begin
     k3, 2*X1 + X2 --> 3*X1
 end;
 
-julia> steady_state_degree(rn)
-Result of generic root count computation
-========================================
- Generic root count: 3
- Choice of constant terms b: QQFieldElem[360]
- Choice of parameters k: [530, 377, 969]
- Computation method: mixed volume
+julia> sd_result = steady_state_degree(rn);
+
+julia> sd_result.count
+3
 ````
 
 """
@@ -227,7 +213,7 @@ function generic_degree(F)
 
     # Check for nondegeneracy
     if !has_nondegenerate_zero(F)
-        return GenericRootCountResult(0, nothing, nothing, false, nothing, nothing, nothing)
+        return GenericRootCountResult(0, nothing, nothing, :degeneracy, nothing, nothing, nothing, nothing)
     end
 
     # Augment the system to a square system by an L with full support

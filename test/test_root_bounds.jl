@@ -22,8 +22,8 @@ using VerticalRootCounts
         k3, 2*X1 + X2 --> 3*X1
     end;
     
-    @test steady_state_degree(rn, check_transversality=true).count == 3
-    @test steady_state_degree(rn, check_transversality=false).count == 3
+    @test steady_state_degree(rn, check_cotransversality=true).count == 3
+    @test steady_state_degree(rn, check_cotransversality=false).count == 3
 
     a = [83, 56, 13]
     b = [71]
@@ -47,8 +47,8 @@ end
     
     @test !has_nondegenerate_zero(F)
     
-    @test generic_root_count(F, check_transversality=true).count == 0
-    @test generic_root_count(F, check_transversality=false).count == 0
+    @test generic_root_count(F, check_cotransversality=true).count == 0
+    @test generic_root_count(F, check_cotransversality=false).count == 0
     @test lower_bound_of_maximal_positive_root_count(F).bound == 0
 
 end
@@ -125,8 +125,8 @@ end
 
     M = F.M
     A = kernel(matrix(ZZ, hcat([M[:, i] - M[:, ncols(M)] for i=1:ncols(M)-1]...)))
-    @test toric_root_bound(A, F, check_transversality=true).bound == 3
-    @test toric_root_bound(A, F, check_transversality=false).bound == 3
+    @test toric_root_bound(A, F, check_cotransversality=true).bound == 3
+    @test toric_root_bound(A, F, check_cotransversality=false).bound == 3
 
     h = [936, 145, 170, 323, 169, 271, 439]
     @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, F, b, h).bound == 1

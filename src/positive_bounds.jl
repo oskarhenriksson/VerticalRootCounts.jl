@@ -24,8 +24,8 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
-    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     print(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
 end
 
@@ -60,13 +60,11 @@ julia> a = [839, 562, 13];
 
 julia> b = [71];
 
-julia> lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h)
-Result of positive tropical root bound computation
-==================================================
- Lower bound on the maximal number of positive roots: 3
- Choice of constant terms b: [71]
- Choice of parameters a: [839, 562, 13]
- Choice of perturbation h: [37, 97, 18]
+julia> bound_result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h);
+
+julia> bound_result.bound
+3
+
 ```
 """
 function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
