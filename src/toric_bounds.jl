@@ -63,7 +63,7 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     mults = Int[]
     while !rootCountComputed
         result = perturb_and_intersect_if_transversal(TropL, Trop_toric)
-        rootCountComputed = result.is_transversal
+        rootCountComputed = result.is_transverse
         mults = result.multiplicities
     end
     return sum(mults)
@@ -71,7 +71,7 @@ end
 
 
 
-struct ToricPositiveRootBound
+struct PositiveToricRootBoundResult
     bound::Int
     b_spec::Vector{QQFieldElem}
     h::Vector{QQFieldElem}
@@ -79,8 +79,8 @@ struct ToricPositiveRootBound
     TropL::TropicalLinearSpace
 end
 
-function Base.show(io::IO, ::MIME"text/plain", r::ToricPositiveRootBound)
-    header = "Toric positive root bound"
+function Base.show(io::IO, ::MIME"text/plain", r::PositiveToricRootBoundResult)
+    header = "Result of positive toric root bound computation"
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
@@ -127,7 +127,7 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
 
     result = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
     
-    if !result.is_transversal 
+    if !result.is_transverse 
         throw(NongenericDirectionError("Input perturbation not generic"))
     end
 
@@ -139,7 +139,7 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         Oscar.is_initial_positive(Ilin, tropical_semiring_map(QQ), p) 
         for p in normalized_points
     )
-    return ToricPositiveRootBound(bound, b_spec, h, Trop_toric, TropL)
+    return PositiveToricRootBoundResult(bound, b_spec, h, Trop_toric, TropL)
 end
 
 
@@ -238,6 +238,6 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
             ]
         )
     end
-    return ToricPositiveRootBound(best_count, best_b, best_h, Trop_toric, best_TropL)
+    return PositiveToricRootBoundResult(best_count, best_b, best_h, Trop_toric, best_TropL)
 end
 

@@ -9,7 +9,7 @@ struct NongenericDirectionError <: Exception
 end
 Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
 
-struct PositiveRootBound
+struct PositiveRootBoundResult
     bound::Int
     a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
     b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
@@ -17,8 +17,8 @@ struct PositiveRootBound
     TropB::Union{TropicalVariety,Nothing}
     TropL::Union{TropicalLinearSpace,Nothing}
 end
-function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBound)
-    header = "Positive tropical root bound"
+function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
+    header = "Result of positive tropical root bound computation"
     println(io, header)
     println(io, "="^(length(header)))
     println(io, " Lower bound on the maximal number of positive roots: ", r.bound)
@@ -111,7 +111,7 @@ function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
 
     result = perturb_and_intersect_if_transversal(TropL, TropB,
                                 perturbation=vcat(zeros(Int, n+1), h), with_multiplicities=false)
-    if !result.is_transversal 
+    if !result.is_transverse 
         throw(NongenericDirectionError("The shift of the tropicalized binomial variety not generic; try a different h vector"))
     end
 
@@ -122,7 +122,7 @@ function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
         Oscar.is_initial_positive(Ilin, nu, p) 
         for p in normalized_points
     )
-    return PositiveRootBound(bound, a_spec, b_spec, h, TropB, TropL)
+    return PositiveRootBoundResult(bound, a_spec, b_spec, h, TropB, TropL)
 end
 
 @doc raw"""
@@ -158,7 +158,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
 
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(F)
-        return PositiveRootBound(0, nothing, nothing, nothing, nothing, nothing)
+        return PositiveRootBoundResult(0, nothing, nothing, nothing, nothing, nothing)
     end
 
     # Tropicalize the binomial part of the modified system
@@ -256,7 +256,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
             ]
         )
     end
-    return PositiveRootBound(best_count, best_a, best_b, best_h, TropB, best_TropL)
+    return PositiveRootBoundResult(best_count, best_a, best_b, best_h, TropB, best_TropL)
 end
 
 
