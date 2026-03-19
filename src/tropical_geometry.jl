@@ -1,5 +1,5 @@
 struct StableIntersectionResult
-    points::Vector{QQFieldElem}
+    points::Vector{Vector{QQFieldElem}}
     multiplicities::Vector{Int}
     perturbation::Vector{<:Integer}
     is_transverse::Bool
