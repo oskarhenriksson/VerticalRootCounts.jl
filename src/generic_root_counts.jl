@@ -1,10 +1,42 @@
 export steady_state_degree,
     generic_root_count,
     generic_degree
-    
+
+struct GenericRootCountResult
+    count::Int
+    a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    method::Symbol
+    TropB::Union{TropicalVariety,Nothing}
+    TropL::Union{TropicalLinearSpace,Nothing}
+    stable_intersection::Union{StableIntersectionResult,Nothing}
+end
+
+function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
+    header = "Result of generic root count computation"
+    println(io, header)
+    println(io, "="^(length(header)))
+    println(io, " Generic root count: ", r.count)
+    println(io, " Choice of constant terms b: ", r.b_spec)
+    println(io, " Choice of parameters k: ", r.a_spec)
+    if r.method == :degeneracy
+        println(io, " Computed method: degeneracy")
+    elseif r.method == :cotransversality
+        println(io, " Computation method: mixed volume")
+    elseif r.method == :stable_intersection
+        println(io, " Computed method: stable intersection")
+        println(io, " Choice of perturbation h: ", r.stable_intersection.perturbation)
+    end
+end
+
+
+
 @doc raw"""
 generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
-    b_spec = nothing, check_transversality::Bool=true, verbose::Bool=false)
+    a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
+    b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
+    check_transversality::Bool=true, 
+    verbose::Bool=false)
 
    Compute the generic root count of an augmented vertical system `F`.
 
@@ -27,8 +59,8 @@ generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix;
 
 """
 function generic_root_count(F::AugmentedVerticalSystem;
-        b_spec = nothing, 
-        a_spec = nothing,
+        b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
+        a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
         check_transversality::Bool=true, 
         verbose::Bool=false)
 
@@ -36,7 +68,7 @@ function generic_root_count(F::AugmentedVerticalSystem;
 
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(F)
-        return 0
+        return GenericRootCountResult(0, nothing, nothing, :degeneracy, nothing, nothing, nothing)
     end
 
     C, M, L = F.C, F.M, F.L #defining matrices
@@ -81,7 +113,7 @@ function generic_root_count(F::AugmentedVerticalSystem;
             nonlinear_supports = Matrix{Int}[Matrix{Int}(M_tilde[:,indices]) for indices in tp_nonlinear]
             affine_supports =  Matrix{Int}[hcat([i in 1:n ? standard_vector(i, n) : zeros(Int, n) for i in indices]...) for indices in tp_affine]
             supports = vcat(nonlinear_supports, affine_supports)
-            return mixed_volume(supports)
+            return GenericRootCountResult(mixed_volume(supports), a_spec, b_spec, :cotransversality, nothing, nothing, nothing)
         end
     end
 
@@ -102,12 +134,13 @@ function generic_root_count(F::AugmentedVerticalSystem;
     # Run perturb_and_intersect_if_transversal until done
     rootCountComputed = false
     mults = Int[]
+    Σ = nothing
     while !rootCountComputed
-        result = perturb_and_intersect_if_transversal(TropL, TropB)
-        rootCountComputed = result.is_transversal
-        mults = result.multiplicities
+        Σ = perturb_and_intersect_if_transversal(TropL, TropB)
+        rootCountComputed = Σ.is_transverse
+        mults = Σ.multiplicities
     end
-    return sum(mults)
+    return GenericRootCountResult(sum(mults), a_spec, b_spec, :stable_intersection, TropB, TropL, Σ)
 end
 
 
@@ -153,7 +186,7 @@ function generic_degree(F)
 
     # Check for nondegeneracy
     if !has_nondegenerate_zero(F)
-        return 0
+        return GenericRootCountResult(0, nothing, nothing, false, nothing, nothing, nothing)
     end
 
     # Augment the system to a square system by an L with full support
