@@ -86,7 +86,7 @@ function generic_root_count(F::AugmentedVerticalSystem;
     end
 
     C, M, L = F.C, F.M, F.L #defining matrices
-    C_tilde, M_tilde = F.C_tilde, F.M_tilde #minimal presentation
+    C_min, M_min = F.C_min, F.M_min #minimal presentation
     Lb = F.Lb #symbolic coefficient matrix for the augmentation of the system
 
     n = F.n #number of variables
@@ -101,11 +101,11 @@ function generic_root_count(F::AugmentedVerticalSystem;
         is_generic = false
         while !is_generic
             a_spec = rand(1:1000, m)
-            is_generic = check_genericity_of_specialization(C_tilde, a_spec)
+            is_generic = check_genericity_of_specialization(C_min, a_spec)
         end
     end
-    @req check_genericity_of_specialization(C_tilde, a_spec) "Choice of parameters needs to be generic"
-    C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
+    @req check_genericity_of_specialization(C_min, a_spec) "Choice of parameters needs to be generic"
+    C_min_spec = evaluate.(C_min, Ref(a_spec))
 
     # Pick a generic specialization of the constant terms
     if isnothing(b_spec)
@@ -120,11 +120,11 @@ function generic_root_count(F::AugmentedVerticalSystem;
 
     # Compute the generic root count as a mixed volume if the linear part gives a transversal matroid
     if check_cotransversality
-        tp_nonlinear = transversal_presentation(C_tilde_spec)
+        tp_nonlinear = transversal_presentation(C_min_spec)
         tp_affine = transversal_presentation(Lb_spec)
         if tp_nonlinear != false && tp_affine != false
             verbose && @info "Transversal presentations found"
-            nonlinear_supports = Matrix{Int}[Matrix{Int}(M_tilde[:,indices]) for indices in tp_nonlinear]
+            nonlinear_supports = Matrix{Int}[Matrix{Int}(M_min[:,indices]) for indices in tp_nonlinear]
             affine_supports =  Matrix{Int}[hcat([i in 1:n ? standard_vector(i, n) : zeros(Int, n) for i in indices]...) for indices in tp_affine]
             supports = vcat(nonlinear_supports, affine_supports)
             return GenericRootCountResult(
@@ -141,7 +141,7 @@ function generic_root_count(F::AugmentedVerticalSystem;
     end
 
     # Tropicalize the linear part of the modified system
-    linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
+    linear_part_matrix = block_diagonal_matrix([Lb_spec, C_min_spec])
     kernel_matrix = transpose(kernel(linear_part_matrix, side=:right))
     TropL = tropical_linear_space(kernel_matrix)
     verbose && @info "Tropical linear space computed"
@@ -150,7 +150,7 @@ function generic_root_count(F::AugmentedVerticalSystem;
     K, t = rational_function_field(QQ,"t")
     nu = tropical_semiring_map(K,t)
     R, x, z, y = polynomial_ring(K, "x"=>1:n, "z"=>1:1, "y"=>1:r)
-    binomials = vcat([y[i]-prod(x.^M_tilde[:,i]) for i=1:r], [z[1]-1])
+    binomials = vcat([y[i]-prod(x.^M_min[:,i]) for i=1:r], [z[1]-1])
     TropB = Oscar.tropical_variety_binomial(ideal(R, binomials), nu)
     verbose && @info "Tropical binomial variety computed"
  

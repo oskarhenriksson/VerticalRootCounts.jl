@@ -3,25 +3,38 @@ export minimal_presentation,
     AugmentedVerticalSystem
 
 struct AugmentedVerticalSystem
-    n::Int
-    m::Int
-    r::Int
-    s::Int
-    d::Int
-    C::QQMatrix
-    M::ZZMatrix
-    L::QQMatrix
-    C_tilde::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}
-    M_tilde::ZZMatrix
-    Lb::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}
-    system::Vector{<:AbstractAlgebra.Generic.MPoly{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}}
+    n::Int #number of variables
+    m::Int #number of a-parameters
+    r::Int #number of monomials
+    s::Int #rank of coefficient matrix
+    d::Int #number of augmenting linear forms
+    C::QQMatrix #coefficient matrix
+    M::ZZMatrix #exponent matrix
+    L::QQMatrix #augmentation matrix
+    C_min::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem} #coefficient matrix of the minimal presentation
+    M_min::ZZMatrix #exponent matrix of the minimal presentation
+    Lb::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem} #symbolic augmented augmentation matrix
+    system::Vector{<:AbstractAlgebra.Generic.MPoly{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}} #the polynomials of the system
 end
 
+
+@doc raw"""
+    is_square(F::AugmentedVerticalSystem)
+
+    Check if the augmented vertical system `F` is square, i.e. if the number of polynomials equals the number of variables.
+"""
 is_square(F::AugmentedVerticalSystem) = (F.s + F.d == F.n)
+
+
+@doc raw"""
+    is_purely_vertical(F::AugmentedVerticalSystem)
+
+    Check if the augmented vertical system `F` is purely vertical, i.e. if the number of augmenting linear forms is zero.
+"""
 is_purely_vertical(F::AugmentedVerticalSystem) = (F.d == 0)
 
 
-"""
+@doc raw"""
     AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
 
 Constructs the augmented vertical system given by a parameter-separating presentation, consisting of
@@ -40,8 +53,8 @@ function AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matr
     @req nrows(C) == rank(C) "The coefficient matrix C needs to have full row rank"
     
     # Minimal presentation of the system
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde) #number of monomials 
+    C_min, M_min = minimal_presentation(C, M)
+    r = ncols(M_min) #number of monomials 
 
     # Symbolic coefficient matrix for the augmentation of the system
     B, b = rational_function_field(QQ, "b"=>1:d)
@@ -49,7 +62,7 @@ function AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matr
 
     system = oscar_system(C, M, L)
 
-    return AugmentedVerticalSystem(n, m, r, s, d, C, M, L, C_tilde, M_tilde, Lb, system)
+    return AugmentedVerticalSystem(n, m, r, s, d, C, M, L, C_min, M_min, Lb, system)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", F::AugmentedVerticalSystem)
@@ -75,7 +88,7 @@ function oscar_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, n
     return [vertical_part; augmentation_part]
 end
 
-"""
+@doc raw"""
     minimal_presentation(C, M)
 
     Given a vertical system given by`C` and exponent matrix `M`, 
@@ -96,14 +109,14 @@ end
     [0   1   1   0   0   0]
     [0   0   0   0   1   1]
 
-    julia> C_tilde, M_tilde = minimal_presentation(C, M);
+    julia> C_min, M_min = minimal_presentation(C, M);
 
-    julia> C_tilde
+    julia> C_min
     [   0           a[3]   -a[4]           a[5]]
     [a[1]   -a[2] - a[3]       0              0]
     [   0              0    a[4]   -a[5] - a[6]]
 
-    julia> M_tilde
+    julia> M_min
     [1   0   0   0]
     [0   0   1   0]
     [1   0   0   0]
@@ -118,16 +131,16 @@ function minimal_presentation(C::QQMatrix, M::ZZMatrix)
     unique_columns = unique(columns)
     r = length(unique_columns)
 
-    M_tilde = matrix(ZZ, hcat(unique_columns...))
+    M_min = matrix(ZZ, hcat(unique_columns...))
     A, a = rational_function_field(QQ, "a"=>1:ncols(M))
-    C_tilde = zero_matrix(A, nrows(C), r) 
+    C_min = zero_matrix(A, nrows(C), r) 
     for i = 1:r
         indices = findall(c -> c == unique_columns[i], columns)
         for j in indices
-            C_tilde[:, i] += a[j] .* C[:, j]
+            C_min[:, i] += a[j] .* C[:, j]
         end
     end
-    return C_tilde, M_tilde
+    return C_min, M_min
 end
 
 
@@ -157,7 +170,7 @@ function has_nondegenerate_zero(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matri
     end
 end
 
-"""
+@doc raw"""
     has_nondegenerate_zero(F::AugmentedVerticalSystem; 
     number_of_attempts::Int=3, max_entry_size::Int=1000, certify::Bool=true)
 

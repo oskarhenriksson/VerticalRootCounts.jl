@@ -83,7 +83,7 @@ function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
 )
 
     # Minimal presentation
-    C_tilde, M_tilde = F.C_tilde, F.M_tilde
+    C_min, M_min = F.C_min, F.M_min
 
     # Symbolic coefficient matrix for the augmentation part
     Lb = F.Lb 
@@ -103,7 +103,7 @@ function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
 
     # Tropicalize the binomial part of the modified system
     if isnothing(TropB)
-        binomials = vcat([y[i]-prod(x.^M_tilde[:,i]) for i=1:r], [z[1]-1])
+        binomials = vcat([y[i]-prod(x.^M_min[:,i]) for i=1:r], [z[1]-1])
         TropB = Oscar.tropical_variety_binomial(ideal(R, binomials), nu)
         verbose && @info "Tropical binomial variety computed"
     end
@@ -111,11 +111,11 @@ function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
     @req check_genericity_of_specialization(Lb, b_spec) "b_spec must be generic"
     Lb_spec = evaluate.(Lb, Ref(b_spec))
 
-    @req check_genericity_of_specialization(C_tilde, a_spec) "a_spec must be generic"
-    C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
+    @req check_genericity_of_specialization(C_min, a_spec) "a_spec must be generic"
+    C_min_spec = evaluate.(C_min, Ref(a_spec))
 
     if isnothing(TropL)
-        linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
+        linear_part_matrix = block_diagonal_matrix([Lb_spec, C_min_spec])
         kernel_matrix = transpose(kernel(linear_part_matrix, side=:right))
         TropL = tropical_linear_space(kernel_matrix)
         verbose && @info "Tropical linear space computed"
@@ -128,7 +128,7 @@ function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
     end
 
     # Count how many of the tropical points that are positive
-    Ilin = ideal(R, C_tilde_spec*y) + ideal(R, Lb_spec*vcat(x,z))
+    Ilin = ideal(R, C_min_spec*y) + ideal(R, Lb_spec*vcat(x,z))
     normalized_points = (lcm(denominator.(p)) .* p for p in Σ.points)
     bound = count(
         Oscar.is_initial_positive(Ilin, nu, p) 
@@ -168,7 +168,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
 )
 
     # Minimal presentation
-    C_tilde, M_tilde = F.C_tilde, F.M_tilde
+    C_min, M_min = F.C_min, F.M_min
 
     # Matrices for the augmentation part
     L = F.L
@@ -195,7 +195,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
     K, t = rational_function_field(QQ,"t")
     nu = tropical_semiring_map(K,t)
     R, x, z, y = polynomial_ring(K, "x"=>1:n, "z"=>1:1, "y"=>1:r)
-    binomials = vcat([y[i]-prod(x.^M_tilde[:,i]) for i=1:r], [z[1]-1])
+    binomials = vcat([y[i]-prod(x.^M_min[:,i]) for i=1:r], [z[1]-1])
     TropB = Oscar.tropical_variety_binomial(ideal(R, binomials), nu)
     verbose && @info "Tropical binomial variety computed"
    
@@ -218,12 +218,12 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
         a_spec = nothing
         while true
             a_spec = rand(1:max_entry_size, m)
-            is_generic = check_genericity_of_specialization(C_tilde, a_spec)
+            is_generic = check_genericity_of_specialization(C_min, a_spec)
             if is_generic
                 break
             end
         end
-        C_tilde_spec = evaluate.(C_tilde, Ref(a_spec))
+        C_min_spec = evaluate.(C_min, Ref(a_spec))
 
         # Pick a generic b
         b_spec = nothing
@@ -237,7 +237,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
         Lb_spec = evaluate.(Lb, Ref(b_spec))
     
         # Tropicalize the linear part of the modified system
-        linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
+        linear_part_matrix = block_diagonal_matrix([Lb_spec, C_min_spec])
         kernel_matrix = transpose(kernel(linear_part_matrix, side=:right))
         TropL = tropical_linear_space(kernel_matrix)
         verbose && @info "Tropical linear space computed"
