@@ -28,12 +28,12 @@ For the 1-site phosphorylation network (Example 2.2 in the paper), we get the st
 ```julia-repl
 julia> using Catalyst;
 julia> rn = Catalyst.@reaction_network begin
-         k1, S0 + E --> ES0
-         k2, ES0  --> S0 + E
-         k3, ES0  --> S1+E
-         k4, S1 + F  --> FS1
-         k5, FS1  --> S1 + F
-         k6, FS1 --> S0 + F
+         k1, S0 + K --> KS0
+         k2, KS0  --> S0 + K
+         k3, KS0  --> S1+K
+         k4, S1 + P  --> PS1
+         k5, PS1  --> S1 + P
+         k6, PS1 --> S0 + P
        end;
 
 julia> steady_state_degree(rn)
