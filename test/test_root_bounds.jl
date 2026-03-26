@@ -11,42 +11,48 @@ using VerticalRootCounts
     M = matrix(ZZ, [[1,0,2], [0,1,1]])
     L = matrix(QQ, [[1,1]])
 
-    @test generic_root_count(C, M, L) == 3
+    F = AugmentedVerticalSystem(C, M, L)
+
+    @test generic_root_count(F).count == 3
+    @test has_nondegenerate_zero(F)
     
     rn = @reaction_network begin
         k1, X1 --> X2
         k2, X2 --> X1
         k3, 2*X1 + X2 --> 3*X1
     end;
-
-    @test has_nondegenerate_zero(C, M, L)
-    @test steady_state_degree(rn, check_transversality=true) == 3
-    @test steady_state_degree(rn, check_transversality=false) == 3
-
-    b = [71]
-    k = [83, 56, 13]
-    h = [37,97,18]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 3
     
-    bound, _, _, _ = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
-    @test bound == 3
+    @test steady_state_degree(rn, check_cotransversality=true).count == 3
+    @test steady_state_degree(rn, check_cotransversality=false).count == 3
+
+    a = [83, 56, 13]
+    b = [71]
+    h = [37,97,18]
+    @test lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h).bound == 3
+
+    @test lower_bound_of_maximal_positive_root_count(F, num_a_b_attempts=5, num_h_attempts_per_a_b=5).bound == 3
+    
+    @test lower_bound_of_maximal_positive_steady_state_count(rn, num_a_b_attempts=3, num_h_attempts_per_a_b=3).bound == 3
     
 end
 
-@testset "Purely vertical system" begin
+@testset "Degenerate purely vertical system" begin
     
     Random.seed!(1234)
 
     C = matrix(QQ, [-1  0  0  0  1  0; 0 -1  0  0  0  1;  0  0 -1  1  0  0]);
     M = matrix(ZZ, [3  2  1  0  0  0; 0  1  0  2  1  0; 0  0  1  0  1  2]);
-    generic_root_count(C, M)
 
-    @test !has_nondegenerate_zero(C, M)
+    F = AugmentedVerticalSystem(C, M)
+    
+    @test !has_nondegenerate_zero(F)
+    
+    @test generic_root_count(F, check_cotransversality=true).count == 0
+    @test generic_root_count(F, check_cotransversality=false).count == 0
+    @test_nowarn sprint(show, MIME("text/plain"), generic_root_count(F, check_cotransversality=true))
+    @test lower_bound_of_maximal_positive_root_count(F).bound == 0
+    @test_nowarn sprint(show, MIME("text/plain"), lower_bound_of_maximal_positive_root_count(F))
 
-    @test generic_root_count(C, M, check_transversality=true) == 0
-    @test generic_root_count(C, M, check_transversality=false) == 0
-    bound, _, _, _ = lower_bound_of_maximal_positive_root_count(C, M)
-    @test bound == 0
 
 end
 
@@ -63,13 +69,13 @@ end
         k6, Wp --> W
     end
 
-    @test steady_state_degree(rn) == 2
+    @test steady_state_degree(rn).count == 2
 
-    C, M, L = steady_state_system(rn)
-    b = [69, 42, 81]
-    k = [284, 215, 921, 770, 883, 792]
+    F = steady_state_system(rn)
+    a = QQ.(1//3 * [284, 215, 921, 770, 883, 792])
+    b = QQ.(1//5 * [69, 42, 81])
     h = [12, 86, 11, 27, 84]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 2
+    @test lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h).bound == 2
 
 end
 
@@ -86,13 +92,13 @@ end
         k6, Hptp  --> Hpt
     end
 
-    @test steady_state_degree(rn) == 3
+    @test steady_state_degree(rn).count == 3
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
+    a = [84, 46, 30, 13, 23, 68]
     b = [59, 34]
-    k = [84, 46, 30, 13, 23, 68]
     h = [834, 131, 91, 217, 253, 498]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 3
+    @test lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h).bound == 3
 
 end
 
@@ -109,24 +115,24 @@ end
         k6, FS1 --> S0 + F
     end
 
-    @test steady_state_degree(rn) == 3
+    @test steady_state_degree(rn).count == 3
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
 
-    @test generic_degree(C, M) == 4
+    @test generic_degree(AugmentedVerticalSystem(F.C, F.M)).count == 4
 
+    a = [84, 46, 30, 13, 23, 68]
     b = [68, 52, 99]
-    k = [84, 46, 30, 13, 23, 68]
     h = [79, 26, 89, 92]
-    @test lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h) == 1
+    @test lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h).bound == 1
 
-
+    M = F.M
     A = kernel(matrix(ZZ, hcat([M[:, i] - M[:, ncols(M)] for i=1:ncols(M)-1]...)))
-    @test toric_root_bound(A, L, check_transversality=true) == 3
-    @test toric_root_bound(A, L, check_transversality=false) == 3
+    @test toric_root_bound(A, F, check_cotransversality=true).bound == 3
+    @test toric_root_bound(A, F, check_cotransversality=false).bound == 3
 
     h = [936, 145, 170, 323, 169, 271, 439]
-    @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, L, b, h) == 1
+    @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, F, b, h).bound == 1
 
 end
 
@@ -151,14 +157,14 @@ end
         k12, FS2 --> S1 + F
     end 
 
-    @test steady_state_degree(rn) == 5
+    @test steady_state_degree(rn).count == 5
 
 end
 
 
 @testset "Triangle network" begin
 
-    Random.seed!(1234)
+    Oscar.set_seed!(1234)
 
     rn = Catalyst.@reaction_network begin
         k1, 3*X1 + 2*X2 --> 6*X1
@@ -167,15 +173,13 @@ end
         k4, 6*X1 -->  4*X2
     end;
 
-    C, M, L = steady_state_system(rn)
+    F = steady_state_system(rn)
 
-    @test generic_root_count(C, M, L) == 6
-    bound, _, _, _ = lower_bound_of_maximal_positive_root_count(C, M, L)
-    @test bound == 1
+    @test generic_root_count(F).count == 6
+    @test lower_bound_of_maximal_positive_root_count(F).bound == 1
     A = matrix(ZZ, [[3, 2]])
-    @test toric_root_bound(A, L) == 3
-    bound, _, _ = toric_lower_bound_of_maximal_positive_root_count(A, L)
-    @test bound == 1
+    @test toric_root_bound(A, F).bound == 3
+    @test toric_lower_bound_of_maximal_positive_root_count(A, F).bound == 1
 
 end
 
@@ -214,8 +218,7 @@ end
         k31, X11         --> X10
     end;
 
-    C, M, L = steady_state_system(rn)
-    F = augmented_vertical_system(C, M, L)
+    F = steady_state_system(rn)
     @test mixed_volume(F) == 56
 
 end

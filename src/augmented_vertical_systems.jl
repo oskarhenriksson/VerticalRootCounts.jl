@@ -1,19 +1,94 @@
 export minimal_presentation, 
-    augmented_vertical_system,
-    has_nondegenerate_zero
+    has_nondegenerate_zero,
+    AugmentedVerticalSystem
 
-function augmented_vertical_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
-
-    KB, k, b = rational_function_field(QQ, "k"=>1:ncols(M), "b"=>1:nrows(L))
-    R, x = polynomial_ring(KB, "x"=>1:nrows(M))
-
-    steady_state = C*[k[j]*prod(x .^ M[:, j]) for j in 1:ncols(M)]
-    conservation_laws = L*x .- b
-
-    return [steady_state; conservation_laws]
+struct AugmentedVerticalSystem
+    n::Int #number of variables
+    m::Int #number of a-parameters
+    r::Int #number of monomials
+    s::Int #rank of coefficient matrix
+    d::Int #number of augmenting linear forms
+    C::QQMatrix #coefficient matrix
+    M::ZZMatrix #exponent matrix
+    L::QQMatrix #augmentation matrix
+    C_min::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem} #coefficient matrix of the minimal presentation
+    M_min::ZZMatrix #exponent matrix of the minimal presentation
+    Lb::AbstractAlgebra.Generic.MatSpaceElem{<:AbstractAlgebra.Generic.RationalFunctionFieldElem} #symbolic augmented augmentation matrix
+    system::Vector{<:AbstractAlgebra.Generic.MPoly{<:AbstractAlgebra.Generic.RationalFunctionFieldElem}} #the polynomials of the system
 end
 
+
+@doc raw"""
+    is_square(F::AugmentedVerticalSystem)
+
+    Check if the augmented vertical system `F` is square, i.e. if the number of polynomials equals the number of variables.
 """
+is_square(F::AugmentedVerticalSystem) = (F.s + F.d == F.n)
+
+
+@doc raw"""
+    is_purely_vertical(F::AugmentedVerticalSystem)
+
+    Check if the augmented vertical system `F` is purely vertical, i.e. if the number of augmenting linear forms is zero.
+"""
+is_purely_vertical(F::AugmentedVerticalSystem) = (F.d == 0)
+
+
+@doc raw"""
+    AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
+
+Constructs the augmented vertical system given by a parameter-separating presentation, consisting of
+- a coefficient matrix `C` (size s×m) of full row rank,
+- an exponent matrix `M`, (size n×m), and
+- an augmentation matrix `L` (size d×n) of full row rank.
+
+"""
+function AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
+    n = nrows(M) #number of variables
+    m = ncols(M) #number of a parameters
+    s = rank(C) #rank
+    d = nrows(L) #number of augmenting linear forms
+
+    @req nrows(L) == rank(L) "The augmentation matrix L needs to have full row rank"
+    @req nrows(C) == rank(C) "The coefficient matrix C needs to have full row rank"
+    
+    # Minimal presentation of the system
+    C_min, M_min = minimal_presentation(C, M)
+    r = ncols(M_min) #number of monomials 
+
+    # Symbolic coefficient matrix for the augmentation of the system
+    B, b = rational_function_field(QQ, "b"=>1:d)
+    Lb = hcat(B.(L), -matrix(B, d, 1, b))
+
+    system = oscar_system(C, M, L)
+
+    return AugmentedVerticalSystem(n, m, r, s, d, C, M, L, C_min, M_min, Lb, system)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", F::AugmentedVerticalSystem)
+    header = "Augmented vertical system"
+    println(io, header)
+    println(io, "="^(length(header)))
+    println(io, "Variables: ", join(gens(parent(F.system[1])), ", "))
+    println(io, "Parameters: ", join(gens(base_ring(parent(F.system[1]))), ", "))
+    println(io)
+    for f in F.system
+        println(io, " ", f)
+    end
+end
+
+function oscar_system(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
+
+    AB, a, b = rational_function_field(QQ, "a"=>1:ncols(M), "b"=>1:nrows(L))
+    R, x = polynomial_ring(AB, "x"=>1:nrows(M))
+
+    vertical_part = C*[a[j]*prod(x .^ M[:, j]) for j in 1:ncols(M)]
+    augmentation_part = L*x .- b
+
+    return [vertical_part; augmentation_part]
+end
+
+@doc raw"""
     minimal_presentation(C, M)
 
     Given a vertical system given by`C` and exponent matrix `M`, 
@@ -34,14 +109,14 @@ end
     [0   1   1   0   0   0]
     [0   0   0   0   1   1]
 
-    julia> C_tilde, M_tilde = minimal_presentation(C, M);
+    julia> C_min, M_min = minimal_presentation(C, M);
 
-    julia> C_tilde
-    [   0           k[3]   -k[4]           k[5]]
-    [k[1]   -k[2] - k[3]       0              0]
-    [   0              0    k[4]   -k[5] - k[6]]
+    julia> C_min
+    [   0           a[3]   -a[4]           a[5]]
+    [a[1]   -a[2] - a[3]       0              0]
+    [   0              0    a[4]   -a[5] - a[6]]
 
-    julia> M_tilde
+    julia> M_min
     [1   0   0   0]
     [0   0   1   0]
     [1   0   0   0]
@@ -56,48 +131,19 @@ function minimal_presentation(C::QQMatrix, M::ZZMatrix)
     unique_columns = unique(columns)
     r = length(unique_columns)
 
-    M_tilde = matrix(ZZ, hcat(unique_columns...))
-    K, k = rational_function_field(QQ, "k"=>1:ncols(M))
-    C_tilde = zero_matrix(K, nrows(C), r) 
+    M_min = matrix(ZZ, hcat(unique_columns...))
+    A, a = rational_function_field(QQ, "a"=>1:ncols(M))
+    C_min = zero_matrix(A, nrows(C), r) 
     for i = 1:r
         indices = findall(c -> c == unique_columns[i], columns)
         for j in indices
-            C_tilde[:, i] += k[j] .* C[:, j]
+            C_min[:, i] += a[j] .* C[:, j]
         end
     end
-    return C_tilde, M_tilde
+    return C_min, M_min
 end
 
 
-
-"""
-    has_nondegenerate_zero(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M));
-    number_of_attempts::Int=3, max_entry_size::Int=1000, certify::Bool=true)
-
-    Check if the augmented vertical system given by `C`, `M`, and `L` (optional input) has a non-degenerate zero.
-
-    This uses the rank condition of [^FHP25].
-
-    # Example
-
-    ```jldoctest
-    julia> C = C = matrix(QQ, [[1,-1,-1]]);
-    julia> M = matrix(ZZ, [[1,0,2], [0,1,1]]);
-    julia> L = matrix(QQ, [[1,1]]);
-    julia> has_nondegenerate_zero(C, M, L)
-    true
-    ```
-
-    ```jldoctest
-    julia> C = matrix(QQ, [-1  0  0  0  1  0; 0 -1  0  0  0  1;  0  0 -1  1  0  0]);
-    julia> M = matrix(ZZ, [3  2  1  0  0  0; 0  1  0  2  1  0; 0  0  1  0  1  2]);
-    julia> has_nondegenerate_zero(C, M)
-    false
-    ```  
-    
-    [^FHP25] Feliu, E., Henriksson, O., Pascual-Escudero, B. "Generic consistency and nondegeneracy of vertically parametrized systems". Journal of Algebra 677 (2025).
-
-"""
 function has_nondegenerate_zero(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M));
     number_of_attempts::Int=3, max_entry_size::Int=1000, certify::Bool=true)
     C = (rref(C)[2])[1:rank(C), :]
@@ -122,4 +168,47 @@ function has_nondegenerate_zero(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matri
     else
         return false
     end
+end
+
+@doc raw"""
+    has_nondegenerate_zero(F::AugmentedVerticalSystem; 
+    number_of_attempts::Int=3, max_entry_size::Int=1000, certify::Bool=true)
+
+    Check if the augmented vertical system `F` has a non-degenerate zero.
+
+    This uses the rank condition of [^FHP25].
+
+    # Example
+
+    ```jldoctest
+    julia> C = matrix(QQ, [[1,-1,-1]]);
+    julia> M = matrix(ZZ, [[1,0,2], [0,1,1]]);
+    julia> L = matrix(QQ, [[1,1]]);
+    julia> F = AugmentedVerticalSystem(C, M, L);
+    julia> has_nondegenerate_zero(F)
+    true
+    ```
+
+    ```jldoctest
+    julia> C = matrix(QQ, [-1  0  0  0  1  0; 0 -1  0  0  0  1;  0  0 -1  1  0  0]);
+    julia> M = matrix(ZZ, [3  2  1  0  0  0; 0  1  0  2  1  0; 0  0  1  0  1  2]);
+    julia> F = AugmentedVerticalSystem(C, M);
+    julia> has_nondegenerate_zero(F)
+    false
+    ```  
+    
+    [^FHP25] Feliu, E., Henriksson, O., Pascual-Escudero, B. "Generic consistency and nondegeneracy of vertically parametrized systems". Journal of Algebra 677 (2025).
+
+"""
+
+function has_nondegenerate_zero(F::AugmentedVerticalSystem; 
+    number_of_attempts::Int=3,
+    max_entry_size::Int=1000,
+    certify::Bool=true
+)
+    return has_nondegenerate_zero(F.C, F.M, F.L;
+        number_of_attempts=number_of_attempts,
+        max_entry_size=max_entry_size,
+        certify=certify
+    )
 end

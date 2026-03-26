@@ -1,66 +1,125 @@
 export steady_state_degree,
     generic_root_count,
     generic_degree
-    
-@doc raw"""
-generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
-    b_spec = nothing, check_transversality::Bool=true, verbose::Bool=false)
 
-    Compute the generic root count of an augmented vertically parametrized system given by 
-    the coefficient matrix `C`, the exponent matrix `M`, and the affine form matrix `L`.
+struct GenericRootCountResult
+    count::Int
+    a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    method::Symbol
+    TropB::Union{TropicalVariety,Nothing}
+    TropL::Union{TropicalLinearSpace,Nothing}
+    h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
+    stable_intersection::Union{StableIntersectionResult,Nothing}
+    cotranversal_presentation_C::Union{Nothing,Vector{Vector{Int}}}
+    cotranversal_presentation_Lb::Union{Nothing,Vector{Vector{Int}}}
+end
 
-    # Example
-    ```jldoctest
-    julia> C = matrix(QQ, [1 -1 -1]);
-
-    julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
- 
-    julia> L = matrix(QQ, [1 1]);
-
-    julia> generic_root_count(C, M, L)
-    3
-
-    julia> generic_root_count(C, M, L, check_transversality=false)
-    3
-    ```
-
-"""
-function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)); 
-        b_spec = nothing, 
-        k_spec = nothing,
-        check_transversality::Bool=true, 
-        verbose::Bool=false)
-
-    # Check whether there are nondegenerate zeros at all
-    if !has_nondegenerate_zero(C, M, L)
-        return 0
+function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
+    header = "Result of generic root count computation"
+    println(io, header)
+    println(io, "="^(length(header)))
+    println(io, " Generic root count: ", r.count)
+    if r.method == :degeneracy
+        println(io, " Computation method: degeneracy")
+        return
     end
-    
-    n = nrows(M) #number of variables
-    m = ncols(M) #number of parameters
-    s = rank(C) #rank
-    d = n-s #corank
-
-    @req nrows(L) == d "The augmentation matrix L must have the same number of rows as the corank of the coefficient matrix"
-
-    # Monomial re-embedding of the system
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde)
-
-    # Pick a generic specialization of the parameters
-    if isnothing(k_spec)
-        is_generic = false
-        while !is_generic
-            k_spec = rand(1:1000, m)
-            is_generic = check_genericity_of_specialization(C_tilde, k_spec)
+    if r.method == :cotransversality
+        println(io, " Computation method: mixed volume for cotransversal presentation")
+    elseif r.method == :stable_intersection
+        println(io, " Computation method: stable intersection of binomial and linear parts")
+    end
+    println(io, " Choice of parameters a: ", "[", join(r.a_spec, ", "), "]")
+    println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
+    if r.method == :stable_intersection
+        println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    end
+    if r.method == :cotransversality
+        println(io, " Row supports of cotransversal presentation for the nonlinear part: ")
+        for indices in r.cotranversal_presentation_C
+            println(io, "  [", join(indices, ", "), "]")
+        end
+        println(io, " Row supports of cotransversal presentation for the linear part: ")
+        for indices in r.cotranversal_presentation_Lb
+            println(io, "  [", join(indices, ", "), "]")
         end
     end
-    @req check_genericity_of_specialization(C_tilde, k_spec) "Choice of parameters needs to be generic"
-    C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
+end
 
-    # Symbolic coefficient matrix for the augmentation of the system
-    B, b = rational_function_field(QQ, "b"=>1:d)
-    Lb = hcat(B.(L), -matrix(B, d, 1, b))
+
+
+@doc raw"""
+generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
+    a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
+    b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
+    check_cotransversality::Bool=true, 
+    verbose::Bool=false)
+
+Compute the generic root count of an augmented vertical system `F`.
+
+# Example
+
+```jldoctest
+julia> C = matrix(QQ, [1 -1 -1]);
+
+julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
+
+julia> L = matrix(QQ, [1 1]);
+
+julia> F = AugmentedVerticalSystem(C, M, L);
+
+julia> grc_result = generic_root_count(F);
+
+julia> grc_result.count
+3
+
+```
+"""
+function generic_root_count(F::AugmentedVerticalSystem;
+        b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
+        a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
+        check_cotransversality::Bool=true, 
+        verbose::Bool=false)
+
+    @req is_square(F) "The system needs to be square (number of rows of C and L need to sum to the number of varialbes)"
+
+    # Check whether there are nondegenerate zeros at all
+    if !has_nondegenerate_zero(F)
+        return GenericRootCountResult(
+            0, 
+            nothing, 
+            nothing, 
+            :degeneracy, 
+            nothing, 
+            nothing,
+            nothing, 
+            nothing,
+            nothing,
+            nothing
+        )
+    end
+
+    C, M, L = F.C, F.M, F.L #defining matrices
+    C_min, M_min = F.C_min, F.M_min #minimal presentation
+    Lb = F.Lb #symbolic coefficient matrix for the augmentation of the system
+
+    n = F.n #number of variables
+    m = F.m #number of parameters
+    s = F.s #number of polynomials in the nonlinear part
+    d = F.d #number of augmenting linear forms
+    r = F.r #number of monomials in the nonlinear part
+
+
+    # Pick a generic specialization of the parameters
+    if isnothing(a_spec)
+        is_generic = false
+        while !is_generic
+            a_spec = rand(1:1000, m)
+            is_generic = check_genericity_of_specialization(C_min, a_spec)
+        end
+    end
+    @req check_genericity_of_specialization(C_min, a_spec) "Choice of parameters needs to be generic"
+    C_min_spec = evaluate.(C_min, Ref(a_spec))
 
     # Pick a generic specialization of the constant terms
     if isnothing(b_spec)
@@ -74,20 +133,31 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     Lb_spec = evaluate.(Lb, Ref(b_spec))
 
     # Compute the generic root count as a mixed volume if the linear part gives a transversal matroid
-    if check_transversality
-        tp_nonlinear = transversal_presentation(C_tilde_spec)
-        tp_affine = transversal_presentation(Lb_spec)
+    if check_cotransversality
+        tp_nonlinear = cotransversal_presentation(C_min_spec)
+        tp_affine = cotransversal_presentation(Lb_spec)
         if tp_nonlinear != false && tp_affine != false
-            verbose && @info "Transversal presentations found"
-            nonlinear_supports = Matrix{Int}[Matrix{Int}(M_tilde[:,indices]) for indices in tp_nonlinear]
+            verbose && @info "Cotransversal presentations found"
+            nonlinear_supports = Matrix{Int}[Matrix{Int}(M_min[:,indices]) for indices in tp_nonlinear]
             affine_supports =  Matrix{Int}[hcat([i in 1:n ? standard_vector(i, n) : zeros(Int, n) for i in indices]...) for indices in tp_affine]
             supports = vcat(nonlinear_supports, affine_supports)
-            return mixed_volume(supports)
+            return GenericRootCountResult(
+                mixed_volume(supports), 
+                a_spec, 
+                b_spec, 
+                :cotransversality, 
+                nothing, 
+                nothing,
+                nothing,
+                nothing,
+                tp_nonlinear,
+                tp_affine,
+            )
         end
     end
 
     # Tropicalize the linear part of the modified system
-    linear_part_matrix = block_diagonal_matrix([Lb_spec, C_tilde_spec])
+    linear_part_matrix = block_diagonal_matrix([Lb_spec, C_min_spec])
     kernel_matrix = transpose(kernel(linear_part_matrix, side=:right))
     TropL = tropical_linear_space(kernel_matrix)
     verbose && @info "Tropical linear space computed"
@@ -96,15 +166,29 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     K, t = rational_function_field(QQ,"t")
     nu = tropical_semiring_map(K,t)
     R, x, z, y = polynomial_ring(K, "x"=>1:n, "z"=>1:1, "y"=>1:r)
-    binomials = vcat([y[i]-prod(x.^M_tilde[:,i]) for i=1:r], [z[1]-1])
+    binomials = vcat([y[i]-prod(x.^M_min[:,i]) for i=1:r], [z[1]-1])
     TropB = Oscar.tropical_variety_binomial(ideal(R, binomials), nu)
     verbose && @info "Tropical binomial variety computed"
  
-    # Compute the stable intersection
-    _, mults = tropical_stable_intersection_linear_binomial(TropL, TropB)
-    return sum(mults)
+    # Run perturb_and_intersect_if_transversal until done
+    Σ = nothing
+    while true
+        Σ = perturb_and_intersect_if_transversal(TropL, TropB)
+        Σ.is_transverse && break
+    end
+    return GenericRootCountResult(
+        sum(Σ.multiplicities),
+        a_spec, 
+        b_spec, 
+        :stable_intersection,
+        TropB,
+        TropL,
+        Σ.perturbation,
+        Σ,
+        nothing,
+        nothing
+    )
 end
-
 
 
 @doc raw"""
@@ -120,13 +204,15 @@ julia> rn = @reaction_network begin
     k3, 2*X1 + X2 --> 3*X1
 end;
 
-julia> steady_state_degree(rn)
+julia> sd_result = steady_state_degree(rn);
+
+julia> sd_result.count
 3
 ````
 
 """
 steady_state_degree(rn::ReactionSystem; kwargs...) = 
-    generic_root_count(steady_state_system(rn)...; kwargs...)
+    generic_root_count(steady_state_system(rn); kwargs...)
 
 
 
@@ -134,30 +220,37 @@ steady_state_degree(rn::ReactionSystem; kwargs...) =
 """
     generic_degree(C::QQMatrix, M::ZZMatrix)
 
-Compute the generic degree of the ideal of a vertical system.
+Compute the generic degree of the ideal of a purely vertical system `F`.
 
 In accordance with Bézout's theorem, we compute this by intersecting with a 
 generic affine space of complementary dimension.
 
 """
-function generic_degree(C::QQMatrix, M::ZZMatrix) 
+function generic_degree(F) 
 
-    n = nrows(M) #number of variables
-    m = ncols(M) #number of parameters
-    s = rank(C) #rank
+    @req is_purely_vertical(F) "The system needs to be purely vertical (number of rows of L needs to be zero)"
+
+    n = nrows(F.M) #number of variables
+    s = rank(F.C) #rank
 
     # Check for nondegeneracy
-    if !has_nondegenerate_zero(C, M)
-        return 0
+    if !has_nondegenerate_zero(F)
+        return GenericRootCountResult(0, nothing, nothing, :degeneracy, nothing, nothing, nothing, nothing)
     end
 
     # Augment the system to a square system by an L with full support
-    L_generic = matrix(QQ, rand(Int16, n-s, nrows(M)))
-
     # Check that the matroid is uniform (all Plücker coordinates are nonzero)
-    all(!is_zero, minors(L_generic, nrows(L_generic)))
+    L_generic = nothing
+    while true
+        L_generic = matrix(QQ, rand(Int16, n-s, n))
+        if all(!is_zero, minors(L_generic, nrows(L_generic)))
+            break
+        end
+    end
+
+    F_augmented = AugmentedVerticalSystem(F.C, F.M, L_generic)
 
     # Compute the generic root count
-    return generic_root_count(C, M, L_generic)
+    return generic_root_count(F_augmented)
 
 end
