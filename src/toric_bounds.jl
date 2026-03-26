@@ -11,6 +11,7 @@ struct ToricRootBoundResult
     TropL::Union{TropicalLinearSpace,Nothing}
     h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
     stable_intersection::Union{StableIntersectionResult,Nothing}
+    cotranversal_presentation_Lb::Union{Nothing,Vector{Vector{Int}}}
 end
 
 function Base.show(io::IO, ::MIME"text/plain", r::ToricRootBoundResult)
@@ -30,6 +31,12 @@ function Base.show(io::IO, ::MIME"text/plain", r::ToricRootBoundResult)
     println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :stable_intersection
         println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    end
+    if r.method == :cotransversality
+        println(io, " Row supports of cotransversal presentation for the linear part: ")
+        for indices in r.cotranversal_presentation_Lb
+            println(io, "  [", join(indices, ", "), "]")
+        end
     end
 end
 
@@ -67,14 +74,23 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
 
     # Check for transversality
     if check_cotransversality
-        tp = transversal_presentation(Lb_spec)
+        tp = cotransversal_presentation(Lb_spec)
         if tp != false
-            verbose && @info "Transversal presentation found"
+            verbose && @info "Cotransversal presentation found"
             supports = [Matrix{Int}(A_extended[:,indices]) for indices in tp]
             supports_shifted = [S .- min.(0, vec(minimum(S, dims=2))) for S in supports];
             degA = Int(prod(diagonal(snf(A))))
             bound = Int(mixed_volume(supports_shifted)/degA)
-            return ToricRootBoundResult(bound, b_spec, :cotransversality, nothing, nothing, nothing, nothing)
+            return ToricRootBoundResult(
+                bound,
+                b_spec,
+                :cotransversality,
+                nothing,
+                nothing,
+                nothing,
+                nothing,
+                tp
+            )
         end
     end
 
@@ -103,7 +119,8 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
         Trop_toric, 
         TropL, 
         Σ.perturbation,
-        Σ
+        Σ,
+        nothing
     )
 end
 

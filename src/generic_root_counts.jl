@@ -11,6 +11,8 @@ struct GenericRootCountResult
     TropL::Union{TropicalLinearSpace,Nothing}
     h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
     stable_intersection::Union{StableIntersectionResult,Nothing}
+    cotranversal_presentation_C::Union{Nothing,Vector{Vector{Int}}}
+    cotranversal_presentation_Lb::Union{Nothing,Vector{Vector{Int}}}
 end
 
 function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
@@ -31,6 +33,16 @@ function Base.show(io::IO, ::MIME"text/plain", r::GenericRootCountResult)
     println(io, " Choice of constant terms b: ", "[", join(r.b_spec, ", "), "]")
     if r.method == :stable_intersection
         println(io, " Choice of perturbation h: ", "[", join(r.h, ", "), "]")
+    end
+    if r.method == :cotransversality
+        println(io, " Row supports of cotransversal presentation for the nonlinear part: ")
+        for indices in r.cotranversal_presentation_C
+            println(io, "  [", join(indices, ", "), "]")
+        end
+        println(io, " Row supports of cotransversal presentation for the linear part: ")
+        for indices in r.cotranversal_presentation_Lb
+            println(io, "  [", join(indices, ", "), "]")
+        end
     end
 end
 
@@ -81,6 +93,8 @@ function generic_root_count(F::AugmentedVerticalSystem;
             nothing, 
             nothing,
             nothing, 
+            nothing,
+            nothing,
             nothing
         )
     end
@@ -120,10 +134,10 @@ function generic_root_count(F::AugmentedVerticalSystem;
 
     # Compute the generic root count as a mixed volume if the linear part gives a transversal matroid
     if check_cotransversality
-        tp_nonlinear = transversal_presentation(C_min_spec)
-        tp_affine = transversal_presentation(Lb_spec)
+        tp_nonlinear = cotransversal_presentation(C_min_spec)
+        tp_affine = cotransversal_presentation(Lb_spec)
         if tp_nonlinear != false && tp_affine != false
-            verbose && @info "Transversal presentations found"
+            verbose && @info "Cotransversal presentations found"
             nonlinear_supports = Matrix{Int}[Matrix{Int}(M_min[:,indices]) for indices in tp_nonlinear]
             affine_supports =  Matrix{Int}[hcat([i in 1:n ? standard_vector(i, n) : zeros(Int, n) for i in indices]...) for indices in tp_affine]
             supports = vcat(nonlinear_supports, affine_supports)
@@ -134,8 +148,10 @@ function generic_root_count(F::AugmentedVerticalSystem;
                 :cotransversality, 
                 nothing, 
                 nothing,
-                nothing, 
-                nothing
+                nothing,
+                nothing,
+                tp_nonlinear,
+                tp_affine,
             )
         end
     end
@@ -168,7 +184,9 @@ function generic_root_count(F::AugmentedVerticalSystem;
         TropB,
         TropL,
         Σ.perturbation,
-        Σ
+        Σ,
+        nothing,
+        nothing
     )
 end
 
