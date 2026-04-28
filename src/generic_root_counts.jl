@@ -100,8 +100,12 @@ function generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ
     TropB = Oscar.tropical_variety_binomial(ideal(R, binomials), nu)
     verbose && @info "Tropical binomial variety computed"
  
-    # Compute the stable intersection
-    _, mults = tropical_stable_intersection_linear_binomial(TropL, TropB)
+    # Run perturb_and_intersect_if_transversal until done
+    rootCountComputed = false
+    mults = Int[]
+    while !rootCountComputed
+        _, rootCountComputed, _, mults = perturb_and_intersect_if_transversal(TropL, TropB)
+    end
     return sum(mults)
 end
 

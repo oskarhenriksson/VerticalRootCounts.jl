@@ -4,6 +4,12 @@ export lower_bound_of_maximal_positive_steady_state_count,
     lower_bound_of_maximal_positive_root_count_fixed_b_k_h
 
 
+struct NongenericDirectionError <: Exception
+    msg::String
+end
+Base.showerror(io::IO, e::NongenericDirectionError) = print(io, e.msg)
+
+
 @doc raw"""
     lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
     C::QQMatrix, M::ZZMatrix, L::QQMatrix,
@@ -86,8 +92,12 @@ function lower_bound_of_maximal_positive_root_count_fixed_b_k_h(
         verbose && @info "Tropical linear space computed"
     end
 
-    pts, _ = tropical_stable_intersection_linear_binomial(TropL, TropB, 
-        perturbation=vcat(zeros(Int, n+1), h), with_multiplicities=false)
+    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, TropB,
+                                                                   perturbation=vcat(zeros(Int, n+1), h), with_multiplicities=false)
+
+    if !isTransversal 
+        throw(NongenericDirectionError("The shift of the tropicalized binomial variety not generic; try a different h vector"))
+    end
 
     # Count how many of the tropical points that are positive
     Ilin = ideal(R, C_tilde_spec*y) + ideal(R, Lb_spec*vcat(x,z))
@@ -104,7 +114,7 @@ system given by the coefficient matrix `C`, the exponent matrix `M`, and the aff
 
 The function randomly samples `num_b_k_attempts` choices of the b and k parameters, and
 for each such choice `num_h_attempts_per_b_k` shifts of the tropicalized binomial variety 
-in the space of auxillary variables in the modification.
+in the space of auxiliary variables in the modification.
 
 
 """
@@ -121,15 +131,15 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
     s = rank(C) #rank
     d = n-s #corank
 
+    C_tilde, M_tilde = minimal_presentation(C, M)
+    r = ncols(M_tilde)
+
     # Check whether there are nondegenerate zeros at all
     if !has_nondegenerate_zero(C, M, L)
-        return 0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, d)
+        return 0, L*rand(1:max_entry_size, n), rand(1:max_entry_size, m), rand(1:max_entry_size, r)
     end
 
     @req nrows(L) == d "L must have the same number of rows as the corank of C"
-
-    C_tilde, M_tilde = minimal_presentation(C, M)
-    r = ncols(M_tilde)
 
     # Tropicalize the binomial part of the modified system
     K, t = rational_function_field(QQ,"t")
@@ -153,10 +163,31 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
         output = stdout,
         enabled = show_progress
     );
+
+    B, b = rational_function_field(QQ, "b"=>1:d)
+    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     for b_k_attempt=1:num_b_k_attempts
-        b_spec = L*rand(1:max_entry_size, n)
-        Lb_spec = hcat(L, -matrix(QQ, d, 1, b_spec))
-        k_spec = rand(1:max_entry_size, m)
+
+        # Pick a generic b
+        b_spec = nothing
+        while true
+            b_spec = L*rand(1:max_entry_size, n)
+            is_generic = check_genericity_of_specialization(Lb, b_spec)
+            if is_generic
+                break
+            end
+        end
+        Lb_spec = evaluate.(Lb, Ref(b_spec))
+
+        # Pick a generic k
+        k_spec = nothing
+        while true
+            k_spec = rand(1:max_entry_size, m)
+            is_generic = check_genericity_of_specialization(C_tilde, k_spec)
+            if is_generic
+                break
+            end
+        end
         C_tilde_spec = evaluate.(C_tilde, Ref(k_spec))
     
         # Tropicalize the linear part of the modified system
@@ -178,16 +209,16 @@ function lower_bound_of_maximal_positive_root_count(C::QQMatrix, M::ZZMatrix, L:
                     )
                     generic_perturbation = true
                 catch err
-                    if isa(err, ErrorException) && err.msg == "random direction not generic"
+                    if err isa NongenericDirectionError
                         continue
                     else
-                        error(err)
+                        rethrow()
                     end
                 end
             end
 
             # Update the current best count
-            if new_count > best_count
+            if new_count > best_count || isnothing(best_b) || isnothing(best_k) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
                 best_k = k_spec

@@ -24,7 +24,7 @@ function toric_root_bound(A::ZZMatrix, L::QQMatrix;
     if isnothing(b_spec)
         is_generic = false
         while !is_generic
-            b_spec = L*rand(1:1000, n)
+            b_spec = L*rand(Int16, n)
             is_generic = check_genericity_of_specialization(Lb, b_spec)
         end
     end
@@ -60,20 +60,12 @@ function toric_root_bound(A::ZZMatrix, L::QQMatrix;
     verbose && @info "Tropicalization of toric variety computed"
    
     # Stable intersection
-    generic_perturbation = false
-    while !generic_perturbation
-        try
-            pts, mults = tropical_stable_intersection_linear_binomial(TropL, Trop_toric)
-            generic_perturbation = true
-            return sum(mults)
-        catch err
-            if isa(err, ErrorException) && err.msg == "random direction not generic"
-                continue
-            else
-                error(err)
-            end
-        end
+    rootCountComputed = false
+    mults = Int[]
+    while !rootCountComputed
+        _, rootCountComputed, _, mults = perturb_and_intersect_if_transversal(TropL, Trop_toric)
     end
+    return sum(mults)
 end
 
 
@@ -105,7 +97,11 @@ function toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
         verbose && @info "Tropicalization of toric variety computed"
     end
 
-    pts, _ = tropical_stable_intersection_linear_binomial(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    _, isTransversal, pts, _ = perturb_and_intersect_if_transversal(TropL, Trop_toric, perturbation=h, with_multiplicities=false)
+    
+    if !isTransversal 
+        throw(NongenericDirectionError("Input perturbation not generic"))
+    end
 
     # Count how many of the tropical points that are positive
     Lb_spec = hcat(L, -matrix(QQ.(b_spec)))
@@ -117,6 +113,7 @@ end
 function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatrix,; 
     num_b_attempts::Int=5, 
     num_h_attempts_per_b::Int=10, 
+    max_entry_size::Int=1000,
     show_progress::Bool=true,
     verbose::Bool=false
 )
@@ -145,9 +142,23 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
         output = stdout,
         enabled = show_progress
     );
+    
+    B, b = rational_function_field(QQ, "b"=>1:d)
+    Lb = hcat(B.(L), -matrix(B, d, 1, b))
     for b_attempt=1:num_b_attempts
-        b_spec = L*rand(1:1000, n)
-        Lb_spec = hcat(L, -matrix(L*rand(1:1000, n)))
+
+        # Pick a generic b
+        b_spec = nothing
+        while true
+            b_spec = L*(rand(1:max_entry_size, n))
+            is_generic = check_genericity_of_specialization(Lb, b_spec)
+            if is_generic
+                break
+            end
+        end
+        Lb_spec = evaluate.(Lb, Ref(b_spec))
+        
+        # Tropical linear space
         TropL = tropical_linear_space(ideal(Lb_spec*vcat(x,z)))
         verbose && @info "Tropical linear space computed"
     
@@ -158,22 +169,22 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, L::QQMatr
             generic_perturbation = false
             while !generic_perturbation
                 try
-                    h = rand(1:1000, (n+1))
+                    h = rand(1:max_entry_size, (n+1))
                     new_count = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
-                        A, L, b_spec, h, Trop_toric=Trop_toric, TropL=TropL
+                        A, L, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
                     generic_perturbation = true
                 catch err
-                    if isa(err, ErrorException) && err.msg == "random direction not generic"
+                    if err isa NongenericDirectionError
                         continue
                     else
-                        error(err)
+                        rethrow()
                     end
                 end
             end
               
             # Update the current best count
-            if new_count > best_count
+            if new_count > best_count || isnothing(best_b) || isnothing(best_h)
                 best_count = new_count
                 best_b = b_spec
                 best_h = h
