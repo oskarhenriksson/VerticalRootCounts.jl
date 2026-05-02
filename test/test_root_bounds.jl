@@ -32,7 +32,7 @@ using VerticalRootCounts
 
     @test lower_bound_of_maximal_positive_root_count(F, num_a_b_attempts=5, num_h_attempts_per_a_b=5).bound == 3
     
-    @test lower_bound_of_maximal_positive_steady_state_count(rn, num_a_b_attempts=3, num_h_attempts_per_a_b=3).bound == 3
+    @test lower_bound_of_maximal_positive_steady_state_count(rn, num_a_b_attempts=3, num_h_attempts_per_a_b=3, target_bound=3).bound == 3
     
 end
 
@@ -179,7 +179,7 @@ end
     @test lower_bound_of_maximal_positive_root_count(F).bound == 1
     A = matrix(ZZ, [[3, 2]])
     @test toric_root_bound(A, F).bound == 3
-    @test toric_lower_bound_of_maximal_positive_root_count(A, F).bound == 1
+    @test toric_lower_bound_of_maximal_positive_root_count(A, F; target_bound=1).bound == 1
 
 end
 

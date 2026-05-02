@@ -161,7 +161,8 @@ in the space of auxiliary variables in the modification.
 """
 function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
     num_a_b_attempts::Int=5, 
-    num_h_attempts_per_a_b::Int=10, 
+    num_h_attempts_per_a_b::Int=10,
+    target_bound::Union{Nothing,Int}=nothing, 
     show_progress::Bool=true,
     max_entry_size::Int=1000,
     verbose::Bool=false
@@ -212,7 +213,13 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
         enabled = show_progress
     );
 
+    target_reached = false
+
     for a_b_attempt=1:num_a_b_attempts
+
+        if target_reached
+            break
+        end
 
         # Pick a generic a
         a_spec = nothing
@@ -244,7 +251,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
     
         # Compute the stable intersection for different h values
         new_result = nothing
-        for _ = 1:num_h_attempts_per_a_b
+        for h_attempt = 1:num_h_attempts_per_a_b
             generic_perturbation = false
             while !generic_perturbation
                 try
@@ -265,16 +272,20 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
             # Update the current best result if new one is better
             if isnothing(best_result) || new_result.bound > best_result.bound
                 best_result = new_result
+                if !isnothing(target_bound) && best_result.bound >= target_bound
+                    target_reached = true
+                    break
+                end
             end
-        end
 
-        # Update the progress bar
-        ProgressMeter.update!(progress, a_b_attempt; 
-            showvalues = [
-                ("Number of b attempts", "$(a_b_attempt) ($(num_a_b_attempts))"), 
-                ("Current maximal count", best_result.bound)
-            ]
-        )
+            # Update the progress bar
+            ProgressMeter.update!(progress, a_b_attempt*(num_h_attempts_per_a_b-1) + h_attempt; 
+                showvalues = [
+                    ("Number of b attempts", "$(a_b_attempt) ($(num_a_b_attempts))"), 
+                    ("Current maximal count", isnothing(best_result) ? 0 : best_result.bound)
+                ]
+            )
+        end
     end
     return best_result
 end

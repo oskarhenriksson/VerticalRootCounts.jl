@@ -128,11 +128,11 @@ end
 
 struct PositiveToricRootBoundResult
     bound::Int
-    b_spec::Vector{QQFieldElem}
-    h::Vector{QQFieldElem}
+    b_spec::Union{Vector{QQFieldElem}, Nothing}
+    h::Union{Vector{QQFieldElem}, Nothing}
     method::Symbol
-    TropB::TropicalVariety
-    TropL::TropicalLinearSpace
+    TropB::Union{TropicalVariety, Nothing}
+    TropL::Union{TropicalLinearSpace, Nothing}
     stable_intersection::Union{StableIntersectionResult,Nothing}
 end
 
@@ -208,9 +208,12 @@ end
 
 
 
-function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::AugmentedVerticalSystem; 
+function toric_lower_bound_of_maximal_positive_root_count(
+    A::ZZMatrix, 
+    F::AugmentedVerticalSystem; 
     num_b_attempts::Int=5, 
-    num_h_attempts_per_b::Int=10, 
+    num_h_attempts_per_b::Int=10,
+    target_bound::Union{Nothing,Int}=nothing, 
     max_entry_size::Int=1000,
     show_progress::Bool=true,
     verbose::Bool=false
@@ -252,8 +255,14 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
         output = stdout,
         enabled = show_progress
     );
+
+    target_reached = false
     
     for b_attempt=1:num_b_attempts
+
+        if target_reached
+            break
+        end
 
         # Pick a generic b
         b_spec = nothing
@@ -272,7 +281,7 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
     
         # Compute the stable intersection for different h values
         new_result = nothing 
-        for _ = 1:num_h_attempts_per_b
+        for h_attempt = 1:num_h_attempts_per_b
             generic_perturbation = false
             while !generic_perturbation
                 try
@@ -293,16 +302,22 @@ function toric_lower_bound_of_maximal_positive_root_count(A::ZZMatrix, F::Augmen
             # Update the current best count
             if isnothing(best_result) || new_result.bound > best_result.bound
                 best_result = new_result
+                if !isnothing(target_bound) && best_result.bound >= target_bound
+                    verbose && @info "Target bound reached"
+                    target_reached = true
+                    break
+                end
             end
+            
+            # Update the progress bar
+            ProgressMeter.update!(progress, b_attempt*(num_h_attempts_per_b-1) + h_attempt; 
+                showvalues = [
+                    ("Number of b attempts", "$(b_attempt) ($(num_b_attempts))"), 
+                    ("Current maximal count",  isnothing(best_result) ? 0 : best_result.bound)
+                ]
+            )
         end
 
-        # Update the progress bar
-        ProgressMeter.update!(progress, b_attempt; 
-            showvalues = [
-                ("Number of b attempts", "$(b_attempt) ($(num_b_attempts))"), 
-                ("Current maximal count", best_result.bound)
-            ]
-        )
     end
     return best_result
 end
