@@ -17,16 +17,16 @@ export steady_state_system,
         k3, 2*X1 + X2 --> 3*X1
     end;
 
-    julia> C, M, L = steady_state_system(rn);
+    julia> F = steady_state_system(rn);
 
-    julia> C
+    julia> F.C
     [1   -1   -1]
 
-    julia> M
+    julia> F.M
     [1   0   2]
     [0   1   1]
 
-    julia> L
+    julia> F.L
     [1   1]
     ```
 
@@ -43,7 +43,7 @@ function steady_state_system(rn::ReactionSystem)
     first_nonzero_indices = [findfirst(!iszero, row) for row in eachrow(L)]
     C = N[setdiff(collect(1:nrows(N)), first_nonzero_indices), :] 
 
-    return C, M, L
+    return AugmentedVerticalSystem(C, M, L)
 end
 
 

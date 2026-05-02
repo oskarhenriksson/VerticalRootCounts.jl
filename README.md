@@ -23,7 +23,87 @@ using VerticalRootCounts
 
 You can either compute root bounds directly for an augmented vertically parametrized system (defined by a coefficient matrix `C`, an exponent matrix `M`, and coefficient matrix of linear forms `L`) in Oscar format, or for a chemical reaction network given in Catalyst format.
 
-For the 1-site phosphorylation network (Example 2.2 in the paper), we get the steady state degree as follows:
+For the running example in the paper, we compute the generic root count as follows.
+The default is to try to compute the generic root count as a mixed volume if the cotransversality result applies. If it does not apply (or if we turn it off through the `check_cotransversality` keyword), we instead use the main theorem.
+
+```julia-repl
+julia> using Oscar, VerticalRootCounts
+
+julia> C = matrix(QQ, [1 -1 -1 0 0 0; 0 0 1 -1 1 0; 0 0 0 1 -1 -1]);
+
+julia> M = matrix(ZZ, [1 0 0 0 0 0; 1 0 0 0 0 0; 0 1 1 0 0 0; 0 0 0 1 0 0; 0 0 0 1 0 0; 0 0 0 0 1 1]);
+
+julia> L = matrix(QQ, [1 0 1 1 0 1; 0 1 1 0 0 0; 0 0 0 0 1 1]);
+
+julia> F = AugmentedVerticalSystem(C, M, L)
+Augmented vertical system
+=========================
+Variables: x[1], x[2], x[3], x[4], x[5], x[6]
+Parameters: a[1], a[2], a[3], a[4], a[5], a[6], b[1], b[2], b[3]
+
+ a[1]*x[1]*x[2] + (-a[2] - a[3])*x[3]
+ a[3]*x[3] - a[4]*x[4]*x[5] + a[5]*x[6]
+ a[4]*x[4]*x[5] + (-a[5] - a[6])*x[6]
+ x[1] + x[3] + x[4] + x[6] - b[1]
+ x[2] + x[3] - b[2]
+ x[5] + x[6] - b[3]
+
+julia> generic_root_count(F)
+Result of generic root count computation
+========================================
+ Generic root count: 3
+ Computation method: mixed volume of cotransversal presentation
+ Choice of parameters a: [982, 332, 647, 886, 866, 326]
+ Choice of constant terms b: [2110, 1837, 826]
+
+julia> generic_root_count(F; check_cotransversality=false)
+Result of generic root count computation
+========================================
+ Generic root count: 3
+ Computation method: stable intersection of binomial and linear parts
+ Choice of parameters a: [836, 343, 970, 876, 458, 272]
+ Choice of constant terms b: [1667, 826, 1664]
+ Computation of perturbation h: [-17615, -18571, -12785, -9616, -23690, -12039, -914, 3718, 615, 16508, 30700]
+
+```
+
+We can also compute a lower bound on the maximal numer of positive zeros. 
+
+```julia-repl
+julia> lower_bound_of_maximal_positive_root_count(F)
+Result of positive tropical root bound computation
+==================================================
+ Lower bound on the maximal number of positive roots: 1
+ Computation method: stable intersection of binomial and linear parts
+ Choice of parameters a: [759, 419, 322, 789, 164, 751]
+ Choice of constant terms b: [1778, 1714, 282]
+ Choice of perturbation h: [703, 36, 714, 589]
+
+```
+
+To make use of toricity with respect to a known exponent matrix `A`, we instead use the `toric_root_bound` command:
+
+```julia-repl
+julia> A = matrix(ZZ, [1 0 1 0 1 1; 0 1 1 0 1 1; 0 0 0 1 -1 0]);
+
+julia> toric_root_bound(A, F)
+Result of toric root bound computation
+======================================
+ Toric root bound: 3
+ Computation method: mixed volume for cotransversal presentation
+ Choice of constant terms b: [18844, -47913, -6635]
+
+julia> toric_lower_bound_of_maximal_positive_root_count(A, F)
+Result of positive toric root bound computation
+===============================================
+ Lower bound on the maximal number of positive roots: 1
+ Computation method: stable intersection of binomial and linear parts
+ Choice of constant terms b: [2057, 1508, 1027]
+ Choice of perturbation h: [745, 115, 331, 500, 485, 906, 747]
+
+```
+
+We can also apply techniques directly to chemical reaction networks through our interface to `Catalyst.jl` through the following commands:
 
 ```julia-repl
 julia> using Catalyst;
@@ -37,44 +117,23 @@ julia> rn = Catalyst.@reaction_network begin
        end;
 
 julia> steady_state_degree(rn)
-3
-```
+Result of generic root count computation
+========================================
+ Generic root count: 3
+ Computaion method: mixed volume of cotransversal presentation
+ Choice of parameters a: [854, 96, 139, 19, 404, 89]
+ Choice of constant terms b: [2584, 951, 1585]
 
-To get a lower bound on the number of positive steady states, we instead run this:
-
-```julia-repl
 julia> lower_bound_of_maximal_positive_steady_state_count(rn)
-(1, QQFieldElem[901, 977, 1201], [970, 395, 93, 135, 418, 886], [794, 547, 6, 821])
+Result of positive tropical root bound computation
+==================================================
+ Lower bound on the maximal number of positive roots: 1
+ Computation method: stable intersection of binomial and linear parts
+ Choice of parameters a: [724, 851, 433, 573, 189, 272]
+ Choice of constant terms b: [1211, 1284, 828]
+ Choice of perturbation h: [463, 297, 715, 564]
 
-```
 
-The first output is the bound. The remaining outputs are choices of parameters that certify the bound. More precisely, it a choice of total amounts `b`, rate constants `k` and shift vector `h` that give a tropical intersecction with the bound many positve points. (The exact values of these choices depend on ranomized choices inside the algorithm and will therefore vary between runs.)
-
-If we instead want to work directly with the defining matrices of an augmented vertically parametrized system, we can run the following commands:
-
-```julia-repl
-julia> using Oscar;
-
-julia> C = matrix(QQ, [1 -1 -1 0 0 0; 0 0 1 -1 1 0; 0 0 0 1 -1 -1]);
-
-julia> M = matrix(ZZ, [1 0 0 0 0 0; 1 0 0 0 0 0; 0 1 1 0 0 0; 0 0 0 1 0 0; 0 0 0 1 0 0; 0 0 0 0 1 1]);
-
-julia> L = matrix(QQ, [1 0 1 1 0 1; 0 1 1 0 0 0; 0 0 0 0 1 1]);
-
-julia> generic_root_count(C, M, L)
-3
-
-julia> lower_bound_of_maximal_positive_root_count(C, M, L)
-(1, QQFieldElem[1449, 1132, 1538], [696, 838, 259, 713, 11, 312], [142, 958, 851, 938])
-```
-
-To make use of toricity with respect to a known exponent matrix `A`, we instead use the `toric_root_bound` command:
-
-```julia-repl
-julia> A = matrix(ZZ, [1 0 1 0 1 1; 0 1 1 0 1 1; 0 0 0 1 -1 0]);
-
-julia> toric_root_bound(A, L)
-3
 ```
 
 For further examples, we refer to the Jupyter notebook `examples.ipynb`.

@@ -1,6 +1,7 @@
 using Test
-using Catalyst
 using VerticalRootCounts
+using Oscar
+using Catalyst
 
 @testset verbose=true "Steady state systems" begin
     @testset "4-site phosphorylation" begin
@@ -35,11 +36,11 @@ using VerticalRootCounts
             k24, FS4 --> S3 + F
         end
 
-        C_rn, M_rn, L_rn = steady_state_system(rn)
+        F = steady_state_system(rn)
 
-        @test rref(C)[2] == rref(C_rn)[2]
-        @test M == M_rn
-        @test rref(L)[2] == rref(L_rn)[2]
+        @test rref(C)[2] == rref(F.C)[2]
+        @test M == F.M
+        @test rref(L)[2] == rref(F.L)[2]
     end
 
 end
