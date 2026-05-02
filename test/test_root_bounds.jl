@@ -34,6 +34,15 @@ using VerticalRootCounts
     
     @test lower_bound_of_maximal_positive_steady_state_count(rn, num_a_b_attempts=3, num_h_attempts_per_a_b=3, target_bound=3).bound == 3
     
+    # Test behavior for nongeneric h
+    h = [0, 0, 0]
+    @test_throws VerticalRootCounts.NongenericDirectionError (
+        lower_bound_of_maximal_positive_root_count_fixed_b_k_h(C, M, L, b, k, h)
+    )
+
+    bound, _, _, _ = lower_bound_of_maximal_positive_steady_state_count(rn, num_b_k_attempts=5, num_h_attempts_per_b_k=5)
+    @test bound == 3
+    
 end
 
 @testset "Degenerate purely vertical system" begin
@@ -133,6 +142,12 @@ end
 
     h = [936, 145, 170, 323, 169, 271, 439]
     @test toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, F, b, h).bound == 1
+
+    # Test behavior for nongeneric h
+    h = zeros(Int, 7)
+    @test_throws VerticalRootCounts.NongenericDirectionError (
+        toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(A, L, b, h)
+    )
 
 end
 
