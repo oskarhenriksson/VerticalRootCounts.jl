@@ -272,6 +272,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
             # Update the current best result if new one is better
             if isnothing(best_result) || new_result.bound > best_result.bound
                 best_result = new_result
+                verbose && @info "New best bound found: $(best_result.bound)\na = $(best_result.a_spec)\nb = $(best_result.b_spec)\nh = $(best_result.h)"
                 if !isnothing(target_bound) && best_result.bound >= target_bound
                     target_reached = true
                     break

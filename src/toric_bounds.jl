@@ -302,6 +302,7 @@ function toric_lower_bound_of_maximal_positive_root_count(
             # Update the current best count
             if isnothing(best_result) || new_result.bound > best_result.bound
                 best_result = new_result
+                verbose && @info "New best bound found: $(best_result.bound)\nb = $(best_result.b_spec)\nh = $(best_result.h)"
                 if !isnothing(target_bound) && best_result.bound >= target_bound
                     verbose && @info "Target bound reached"
                     target_reached = true
