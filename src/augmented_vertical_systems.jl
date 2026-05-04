@@ -43,7 +43,7 @@ end
 @doc raw"""
     is_square(F::AugmentedVerticalSystem)
 
-    Check if the augmented vertical system `F` is square, i.e. if the number of polynomials equals the number of variables.
+Check if the augmented vertical system `F` is square, i.e. if the number of polynomials equals the number of variables.
 """
 is_square(F::AugmentedVerticalSystem) = (F.s + F.d == F.n)
 
@@ -51,7 +51,7 @@ is_square(F::AugmentedVerticalSystem) = (F.s + F.d == F.n)
 @doc raw"""
     is_purely_vertical(F::AugmentedVerticalSystem)
 
-    Check if the augmented vertical system `F` is purely vertical, i.e. if the number of augmenting linear forms is zero.
+Check if the augmented vertical system `F` is purely vertical, i.e. if the number of augmenting linear forms is zero.
 """
 is_purely_vertical(F::AugmentedVerticalSystem) = (F.d == 0)
 
@@ -117,40 +117,40 @@ end
 @doc raw"""
     minimal_presentation(C, M)
 
-    Given a vertical system given by`C` and exponent matrix `M`, 
-    compute the defining matrices for the monomial re-embedding.
+Given a vertical system given by`C` and exponent matrix `M`, 
+compute the defining matrices for the monomial re-embedding.
 
-    # Example
-    ```jldoctest
-    julia> C = matrix(QQ, [0 0 1 -1 1 0; 1 -1 -1 0 0 0; 0 0 0 1 -1 -1])
-    [0    0    1   -1    1    0]
-    [1   -1   -1    0    0    0]
-    [0    0    0    1   -1   -1]
+# Example
+```jldoctest
+julia> C = matrix(QQ, [0 0 1 -1 1 0; 1 -1 -1 0 0 0; 0 0 0 1 -1 -1])
+[0    0    1   -1    1    0]
+[1   -1   -1    0    0    0]
+[0    0    0    1   -1   -1]
 
-    julia> M = matrix(ZZ, [1 0 0 0 0 0; 0 0 0 1 0 0; 1 0 0 0 0 0; 0 0 0 1 0 0; 0 1 1 0 0 0; 0 0 0 0 1 1])
-    [1   0   0   0   0   0]
-    [0   0   0   1   0   0]
-    [1   0   0   0   0   0]
-    [0   0   0   1   0   0]
-    [0   1   1   0   0   0]
-    [0   0   0   0   1   1]
+julia> M = matrix(ZZ, [1 0 0 0 0 0; 0 0 0 1 0 0; 1 0 0 0 0 0; 0 0 0 1 0 0; 0 1 1 0 0 0; 0 0 0 0 1 1])
+[1   0   0   0   0   0]
+[0   0   0   1   0   0]
+[1   0   0   0   0   0]
+[0   0   0   1   0   0]
+[0   1   1   0   0   0]
+[0   0   0   0   1   1]
 
-    julia> C_min, M_min = minimal_presentation(C, M);
+julia> C_min, M_min = minimal_presentation(C, M);
 
-    julia> C_min
-    [   0           a[3]   -a[4]           a[5]]
-    [a[1]   -a[2] - a[3]       0              0]
-    [   0              0    a[4]   -a[5] - a[6]]
+julia> C_min
+[   0           a[3]   -a[4]           a[5]]
+[a[1]   -a[2] - a[3]       0              0]
+[   0              0    a[4]   -a[5] - a[6]]
 
-    julia> M_min
-    [1   0   0   0]
-    [0   0   1   0]
-    [1   0   0   0]
-    [0   0   1   0]
-    [0   1   0   0]
-    [0   0   0   1]
+julia> M_min
+[1   0   0   0]
+[0   0   1   0]
+[1   0   0   0]
+[0   0   1   0]
+[0   1   0   0]
+[0   0   0   1]
 
-    ```
+```
 """
 function minimal_presentation(C::QQMatrix, M::ZZMatrix)
     columns = [M[:, i] for i in 1:ncols(M)]
@@ -200,30 +200,30 @@ end
     has_nondegenerate_zero(F::AugmentedVerticalSystem; 
     number_of_attempts::Int=3, max_entry_size::Int=1000, certify::Bool=true)
 
-    Check if the augmented vertical system `F` has a non-degenerate zero.
+Check if the augmented vertical system `F` has a non-degenerate zero.
 
-    This uses the rank condition of [^FHP25].
+This uses the rank condition of [^FHP25].
 
-    # Example
+# Example
 
-    ```jldoctest
-    julia> C = matrix(QQ, [[1,-1,-1]]);
-    julia> M = matrix(ZZ, [[1,0,2], [0,1,1]]);
-    julia> L = matrix(QQ, [[1,1]]);
-    julia> F = AugmentedVerticalSystem(C, M, L);
-    julia> has_nondegenerate_zero(F)
-    true
-    ```
+```jldoctest
+julia> C = matrix(QQ, [[1,-1,-1]]);
+julia> M = matrix(ZZ, [[1,0,2], [0,1,1]]);
+julia> L = matrix(QQ, [[1,1]]);
+julia> F = AugmentedVerticalSystem(C, M, L);
+julia> has_nondegenerate_zero(F)
+true
+```
 
-    ```jldoctest
-    julia> C = matrix(QQ, [-1  0  0  0  1  0; 0 -1  0  0  0  1;  0  0 -1  1  0  0]);
-    julia> M = matrix(ZZ, [3  2  1  0  0  0; 0  1  0  2  1  0; 0  0  1  0  1  2]);
-    julia> F = AugmentedVerticalSystem(C, M);
-    julia> has_nondegenerate_zero(F)
-    false
-    ```  
-    
-    [^FHP25] Feliu, E., Henriksson, O., Pascual-Escudero, B. "Generic consistency and nondegeneracy of vertically parametrized systems". Journal of Algebra 677 (2025).
+```jldoctest
+julia> C = matrix(QQ, [-1  0  0  0  1  0; 0 -1  0  0  0  1;  0  0 -1  1  0  0]);
+julia> M = matrix(ZZ, [3  2  1  0  0  0; 0  1  0  2  1  0; 0  0  1  0  1  2]);
+julia> F = AugmentedVerticalSystem(C, M);
+julia> has_nondegenerate_zero(F)
+false
+```  
+
+[^FHP25] Feliu, E., Henriksson, O., Pascual-Escudero, B. "Generic consistency and nondegeneracy of vertically parametrized systems". Journal of Algebra 677 (2025).
 
 """
 
