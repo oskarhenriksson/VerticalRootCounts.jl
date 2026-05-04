@@ -52,18 +52,26 @@ julia> generic_root_count(F)
 Result of generic root count computation
 ========================================
  Generic root count: 3
- Computation method: mixed volume of cotransversal presentation
- Choice of parameters a: [982, 332, 647, 886, 866, 326]
- Choice of constant terms b: [2110, 1837, 826]
+ Computation method: mixed volume for cotransversal presentation
+ Choice of parameters a: [447, 884, 710, 139, 73, 644]
+ Choice of constant terms b: [2132, 438, 369]
+ Row supports of cotransversal presentation for the nonlinear part: 
+  [1, 2, 3, 4]
+  [1, 2, 3, 4]
+  [1, 2, 3, 4]
+ Row supports of cotransversal presentation for the linear part: 
+  [1, 2, 3, 4, 5, 6, 7]
+  [5, 6, 7]
+  [2, 3, 7]
 
 julia> generic_root_count(F; check_cotransversality=false)
 Result of generic root count computation
 ========================================
  Generic root count: 3
  Computation method: stable intersection of binomial and linear parts
- Choice of parameters a: [836, 343, 970, 876, 458, 272]
- Choice of constant terms b: [1667, 826, 1664]
- Computation of perturbation h: [-17615, -18571, -12785, -9616, -23690, -12039, -914, 3718, 615, 16508, 30700]
+ Choice of parameters a: [298, 748, 393, 553, 853, 358]
+ Choice of constant terms b: [2715, 1609, 1198]
+ Choice of perturbation h: [20049, 14768, 16258, 25025, -24345, 5994, -14831, -28978, 17231, 31370, 26329]
 
 ```
 
@@ -75,9 +83,9 @@ Result of positive tropical root bound computation
 ==================================================
  Lower bound on the maximal number of positive roots: 1
  Computation method: stable intersection of binomial and linear parts
- Choice of parameters a: [759, 419, 322, 789, 164, 751]
- Choice of constant terms b: [1778, 1714, 282]
- Choice of perturbation h: [703, 36, 714, 589]
+ Choice of parameters a: [572, 117, 742, 551, 18, 846]
+ Choice of constant terms b: [1750, 1608, 1024]
+ Choice of perturbation h: [873, 352, 327, 768]
 
 ```
 
@@ -91,15 +99,20 @@ Result of toric root bound computation
 ======================================
  Toric root bound: 3
  Computation method: mixed volume for cotransversal presentation
- Choice of constant terms b: [18844, -47913, -6635]
+ Choice of constant terms b: [47751, 28927, -11192]
+ Row supports of cotransversal presentation for the linear part: 
+  [1, 2, 3, 4, 5, 6, 7]
+  [5, 6, 7]
+  [2, 3, 7]
+
 
 julia> toric_lower_bound_of_maximal_positive_root_count(A, F)
 Result of positive toric root bound computation
 ===============================================
  Lower bound on the maximal number of positive roots: 1
  Computation method: stable intersection of binomial and linear parts
- Choice of constant terms b: [2057, 1508, 1027]
- Choice of perturbation h: [745, 115, 331, 500, 485, 906, 747]
+ Choice of constant terms b: [2688, 791, 1540]
+ Choice of perturbation h: [700, 288, 806, 425, 969, 791, 939]
 
 ```
 
@@ -120,18 +133,25 @@ julia> steady_state_degree(rn)
 Result of generic root count computation
 ========================================
  Generic root count: 3
- Computaion method: mixed volume of cotransversal presentation
- Choice of parameters a: [854, 96, 139, 19, 404, 89]
- Choice of constant terms b: [2584, 951, 1585]
+ Computation method: mixed volume for cotransversal presentation
+ Choice of parameters a: [397, 604, 976, 64, 93, 94]
+ Choice of constant terms b: [2290, 627, 1135]
+ Row supports of cotransversal presentation for the nonlinear part: 
+  [1, 2, 3, 4]
+  [1, 2, 3, 4]
+  [1, 2, 3, 4]
+ Row supports of cotransversal presentation for the linear part: 
+  [1, 2, 3, 4, 5, 6, 7]
+  [5, 6, 7]
+  [2, 3, 7]
 
 julia> lower_bound_of_maximal_positive_steady_state_count(rn)
 Result of positive tropical root bound computation
 ==================================================
  Lower bound on the maximal number of positive roots: 1
  Computation method: stable intersection of binomial and linear parts
- Choice of parameters a: [724, 851, 433, 573, 189, 272]
- Choice of constant terms b: [1211, 1284, 828]
- Choice of perturbation h: [463, 297, 715, 564]
-
+ Choice of parameters a: [51, 918, 595, 982, 625, 346]
+ Choice of constant terms b: [1762, 534, 534]
+ Choice of perturbation h: [366, 602, 750, 30]
 
 ```
