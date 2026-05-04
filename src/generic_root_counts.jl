@@ -2,6 +2,24 @@ export steady_state_degree,
     generic_root_count,
     generic_degree
 
+
+@doc raw"""
+    GenericRootCountResult
+
+Representation of the result of a generic root count computation.
+
+Fields:
+- `count::Int`: The generic root count
+- `a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}`: The choice of parameters a used in the computation
+- `b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}`: The choice of constant terms b used in the computation
+- `method::Symbol`: The method used for the computation (:degeneracy, :cotransversality, or :stable_intersection)
+- `TropB::Union{TropicalVariety,Nothing}`: The tropical variety of the binomial part (only for :stable_intersection)
+- `TropL::Union{TropicalLinearSpace,Nothing}`: The tropical linear space of the linear part (only for :stable_intersection)
+- `h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}`: The perturbation used for the stable intersection (only for :stable_intersection)
+- `stable_intersection::Union{StableIntersectionResult,Nothing}`: The result of the stable intersection computation (only for :stable_intersection)
+- `cotranversal_presentation_C::Union{Nothing,Vector{Vector{Int}}}`: The row supports of the cotransversal presentation for the nonlinear part (only for :cotransversality)
+- `cotranversal_presentation_Lb::Union{Nothing,Vector{Vector{Int}}}`: The row supports of the cotransversal presentation for the linear part (only for :cotransversality)  
+"""
 struct GenericRootCountResult
     count::Int
     a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}

@@ -4,31 +4,31 @@ export steady_state_system,
 @doc raw"""
     steady_state_system(rn)
 
-    For a reaction network `rn`, compute the coefficient, exponent, and linear part matrices
-    of the augmented vertically parametrized steady state system.
+For a reaction network `rn`, compute the coefficient, exponent, and linear part matrices
+of the augmented vertically parametrized steady state system.
 
-    # Example
-    ```jldoctest
-    julia> using Catalyst;
-    
-    julia> rn = @reaction_network begin
-        k1, X1 --> X2
-        k2, X2 --> X1
-        k3, 2*X1 + X2 --> 3*X1
-    end;
+# Example
+```jldoctest
+julia> using Catalyst;
 
-    julia> F = steady_state_system(rn);
+julia> rn = @reaction_network begin
+    k1, X1 --> X2
+    k2, X2 --> X1
+    k3, 2*X1 + X2 --> 3*X1
+end;
 
-    julia> F.C
-    [1   -1   -1]
+julia> F = steady_state_system(rn);
 
-    julia> F.M
-    [1   0   2]
-    [0   1   1]
+julia> F.C
+[1   -1   -1]
 
-    julia> F.L
-    [1   1]
-    ```
+julia> F.M
+[1   0   2]
+[0   1   1]
+
+julia> F.L
+[1   1]
+```
 
 """
 function steady_state_system(rn::ReactionSystem)
@@ -50,6 +50,11 @@ end
 
 
 
+"""
+    multisite_phosphorylation_matrices(k)
+
+Compute the coefficient, exponent, and linear part matrices for the k-site phosphorylation network.
+"""
 function multisite_phosphorylation_matrices(k)
 
     # Ordering of species: E, F, S0, ..., Sm, ES0, ..., ESm-1, FS1, ..., FSm
