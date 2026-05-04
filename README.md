@@ -1,5 +1,5 @@
 # VerticalRootCounts.jl
-[Documentation](https://oskarhenriksson.github.io/VerticalRootCounts.jl/)
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://oskarhenriksson.github.io/VerticalRootCounts.jl/dev/)
 [![CI](https://github.com/oskarhenriksson/VerticalRootCounts.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/oskarhenriksson/VerticalRootCounts.jl/actions/workflows/ci.yml)
 
 This Julia package is a proof-of-concept implementation of the tropical root bounds presented in the forthcoming preprint **Root bounds of vertical system using tropical geometry** by Elisenda Feliu, Paul Helminck, Oskar Henriksson, Yue Ren, Benjamin Schröter, and Máté L. Telek.
