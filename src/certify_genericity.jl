@@ -1,6 +1,6 @@
 export check_genericity_of_specialization
 
-"""
+@doc raw"""
     check_genericity_of_specialization(A::AbstractAlgebra.Generic.MatSpaceElem{<:RingElem}, a_spec::Vector{<:Union{Int, RingElem}})
 
 Check if a symbolic matrix is generic at a given specialization, in the sense that the column matroid of the specialized matrix is the same as the column matroid of the generic matrix.

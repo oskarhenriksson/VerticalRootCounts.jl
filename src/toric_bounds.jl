@@ -3,6 +3,22 @@ export toric_root_bound,
     toric_lower_bound_of_maximal_positive_root_count_fixed_b_h,
     toric_lower_bound_of_maximal_positive_root_count
 
+@doc raw"""
+ToricRootBoundResult
+
+Result type of the toric root bound computation.
+
+Fields:
+- `bound::Int`: The computed upper bound on the number of roots in the complex torus.
+- `b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}`: The choice of constant terms b that achieved the bound (if method is not :degeneracy) 
+- `method::Symbol`: The method used to compute the bound. One of :degeneracy, :cotransversality, or :stable_intersection.
+- `Trop_toric::Union{TropicalVariety,Nothing}`: The tropical variety of the toric part of the system (if method is :stable_intersection)
+- `TropL::Union{TropicalLinearSpace,Nothing}`: The tropical linear space of the linear part of the system (if method is :stable_intersection)
+- `h::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}`: The choice of perturbation h that achieved the bound (if method is :stable_intersection)
+- `stable_intersection::Union{StableIntersectionResult,Nothing}`: The result of the stable intersection computation (if method is :stable_intersection)
+- `cotranversal_presentation_Lb::Union{Nothing,Vector{Vector{Int}}}`: The row supports of the cotransversal presentation for the linear part (if method is :cotransversality)
+"""
+
 struct ToricRootBoundResult
     bound::Int
     b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}}
@@ -40,6 +56,29 @@ function Base.show(io::IO, ::MIME"text/plain", r::ToricRootBoundResult)
     end
 end
 
+
+
+@doc raw"""
+    toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
+    b_spec::Union{Nothing,Vector{Int},Vector{QQFieldElem}}=nothing,
+    check_cotransversality::Bool=true,
+    verbose::Bool=false
+)
+
+Given an augmented vertical system `F` that is parametrically toric with 
+respect to an exponent matrix A, compute an upper bound on the number of 
+roots in the complex torus.
+
+Input:
+- `A::ZZMatrix`: Exponent matrix of the toric part of the system (size d×n)
+- `F::AugmentedVerticalSystem`: An augmented vertical system with n variables and d augmenting linear forms.
+
+Optional inputs:
+- `b_spec::Union{Nothing,Vector{Int},Vector{QQFieldElem}}=nothing`: Optional choice of constant terms for the augmenting linear forms. If not provided, a random generic choice will be made.
+- `check_cotransversality::Bool=true`: Whether to check for cotransversality.
+- `verbose::Bool=false`: Whether to print detailed information about the computation process.
+
+"""
 function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     b_spec::Union{Nothing,Vector{Int},Vector{QQFieldElem}}=nothing,
     check_cotransversality::Bool=true,
@@ -125,7 +164,21 @@ function toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
 end
 
 
+@doc raw"""
+PositiveToricRootBoundResult
 
+Result type of the toric lower bound of maximal positive root count. 
+
+Fields:
+- `bound::Int`: The computed lower bound on the maximal number of positive roots.
+- `b_spec::Union{Vector{QQFieldElem}, Nothing}`: The choice of constant terms b that achieved the bound (if method is :stable_intersection)
+- `h::Union{Vector{QQFieldElem}, Nothing}`: The choice of perturbation h that achieved the bound (if method is :stable_intersection)
+- `method::Symbol`: The method used to compute the bound.
+- `TropB::Union{TropicalVariety, Nothing}`: The tropical variety.
+- `TropL::Union{TropicalLinearSpace, Nothing}`: The tropical linear space.
+- `stable_intersection::Union{StableIntersectionResult,Nothing}`: The result of the stable intersection computation.
+
+"""
 struct PositiveToricRootBoundResult
     bound::Int
     b_spec::Union{Vector{QQFieldElem}, Nothing}
@@ -208,6 +261,36 @@ end
 
 
 
+@doc raw"""
+    toric_lower_bound_of_maximal_positive_root_count(
+    A::ZZMatrix, 
+    F::AugmentedVerticalSystem; 
+    num_b_attempts::Int=5, 
+    num_h_attempts_per_b::Int=10,
+    target_bound::Union{Nothing,Int}=nothing, 
+    max_entry_size::Int=1000,
+    show_progress::Bool=true,
+    verbose::Bool=false
+)
+
+Given an augmented vertical system `F` that is parametrically toric with 
+respect to an exponent matrix A, compute a lower bound on the maximal number 
+of positive roots. This is done by trying different choices of the constant 
+terms `b` and perturbations `h`. 
+
+Input:
+- `A::ZZMatrix`: Exponent matrix of the toric part of the system (size d×n)
+- `F::AugmentedVerticalSystem`: An augmented vertical system with n variables and d augmenting linear forms.
+
+Optional inputs:
+- `num_b_attempts::Int=5`: Number of different choices of the constant terms `b` to try.
+- `num_h_attempts_per_b::Int=10`: Number of different choices of the perturbation `h` to try for each choice of `b`.
+- `target_bound::Union{Nothing,Int}=nothing`: If provided, the function will stop as soon as a lower bound greater than or equal to `target_bound` is found.
+- `max_entry_size::Int=1000`: Maximum absolute value of the entries of `b` and `h` when they are randomly generated.
+- `show_progress::Bool=true`: Whether to show a progress bar during the computation.
+- `verbose::Bool=false`: Whether to print detailed information about the computation process.
+
+"""
 function toric_lower_bound_of_maximal_positive_root_count(
     A::ZZMatrix, 
     F::AugmentedVerticalSystem; 

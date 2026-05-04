@@ -2,6 +2,28 @@ export minimal_presentation,
     has_nondegenerate_zero,
     AugmentedVerticalSystem
 
+
+
+@doc raw"""
+    AugmentedVerticalSystem
+
+Representation of an augmented vertical system.
+
+# Fields
+- `n::Int`: Number of variables in the system
+- `m::Int`: Number of a-parameters (coefficients)
+- `r::Int`: Number of monomials in the minimal presentation
+- `s::Int`: Rank of the coefficient matrix `C`
+- `d::Int`: Number of augmenting linear forms
+- `C::QQMatrix`: Original coefficient matrix (size s×m)
+- `M::ZZMatrix`: Original exponent matrix (size n×m)
+- `L::QQMatrix`: Augmentation matrix (size d×n)
+- `C_min`: Coefficient matrix of the minimal presentation (with rational function entries)
+- `M_min::ZZMatrix`: Exponent matrix of the minimal presentation (size n×r)
+- `Lb`: Symbolic augmented augmentation matrix (with rational function entries)
+- `system::Vector`: The polynomials of the system a vector of OSCAR polynomials
+
+"""
 struct AugmentedVerticalSystem
     n::Int #number of variables
     m::Int #number of a-parameters
@@ -43,7 +65,11 @@ Constructs the augmented vertical system given by a parameter-separating present
 - an augmentation matrix `L` (size d×n) of full row rank.
 
 """
-function AugmentedVerticalSystem(C::QQMatrix, M::ZZMatrix, L::QQMatrix=zero_matrix(QQ, 0, nrows(M)))
+function AugmentedVerticalSystem(
+    C::QQMatrix, 
+    M::ZZMatrix, 
+    L::QQMatrix=zero_matrix(QQ, 0, nrows(M));
+)
     n = nrows(M) #number of variables
     m = ncols(M) #number of a parameters
     s = rank(C) #rank

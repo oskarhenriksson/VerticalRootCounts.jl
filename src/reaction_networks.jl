@@ -1,7 +1,7 @@
 export steady_state_system,
     multisite_phosphorylation_matrices
 
-"""
+@doc raw"""
     steady_state_system(rn)
 
     For a reaction network `rn`, compute the coefficient, exponent, and linear part matrices

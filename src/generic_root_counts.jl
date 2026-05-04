@@ -209,15 +209,14 @@ julia> sd_result = steady_state_degree(rn);
 julia> sd_result.count
 3
 ````
-
 """
+
 steady_state_degree(rn::ReactionSystem; kwargs...) = 
     generic_root_count(steady_state_system(rn); kwargs...)
 
 
 
-
-"""
+@doc raw"""
     generic_degree(C::QQMatrix, M::ZZMatrix)
 
 Compute the generic degree of the ideal of a purely vertical system `F`.

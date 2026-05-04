@@ -4,7 +4,7 @@ mixed_volume
 standard_vector = (i, n) -> [j == i ? 1 : 0 for j in 1:n]
 
 
-"""
+@doc raw"""
     mixed_volume(F::Vector{<:MPolyRingElem})
 
 Computes a the mixed volume of a square polynomial system (encoded as a vector of polynomials).

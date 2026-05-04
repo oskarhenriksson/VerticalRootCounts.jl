@@ -1,3 +1,14 @@
+@doc raw"""
+    StableIntersectionResult
+
+A struct to hold the results of the `perturb_and_intersect_if_transversal` function.
+
+Fields:
+- `points::Vector{Vector{QQFieldElem}}`: The intersection points if the intersection
+- `multiplicities::Vector{Int}`: The multiplicities of the intersection points
+- `perturbation::Vector{<:Integer}`: The perturbation used for the intersection
+- `is_transverse::Bool`: Whether the intersection was transverse
+"""
 struct StableIntersectionResult
     points::Vector{Vector{QQFieldElem}}
     multiplicities::Vector{Int}
