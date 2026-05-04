@@ -62,8 +62,7 @@ end
     toric_root_bound(A::ZZMatrix, F::AugmentedVerticalSystem;
     b_spec::Union{Nothing,Vector{Int},Vector{QQFieldElem}}=nothing,
     check_cotransversality::Bool=true,
-    verbose::Bool=false
-)
+    verbose::Bool=false)
 
 Given an augmented vertical system `F` that is parametrically toric with 
 respect to an exponent matrix A, compute an upper bound on the number of 
@@ -263,15 +262,15 @@ end
 
 @doc raw"""
     toric_lower_bound_of_maximal_positive_root_count(
-    A::ZZMatrix, 
-    F::AugmentedVerticalSystem; 
-    num_b_attempts::Int=5, 
-    num_h_attempts_per_b::Int=10,
-    target_bound::Union{Nothing,Int}=nothing, 
-    max_entry_size::Int=1000,
-    show_progress::Bool=true,
-    verbose::Bool=false
-)
+        A::ZZMatrix, 
+        F::AugmentedVerticalSystem; 
+        num_b_attempts::Int=5, 
+        num_h_attempts_per_b::Int=10,
+        target_bound::Union{Nothing,Int}=nothing, 
+        max_entry_size::Int=1000,
+        show_progress::Bool=true,
+        verbose::Bool=false
+    )
 
 Given an augmented vertical system `F` that is parametrically toric with 
 respect to an exponent matrix A, compute a lower bound on the maximal number 

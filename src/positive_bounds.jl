@@ -34,44 +34,6 @@ function Base.show(io::IO, ::MIME"text/plain", r::PositiveRootBoundResult)
     end
 end
 
-@doc raw"""
-    lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
-    F::AugmentedVerticalSystem,
-    a_spec::Union{Vector{Int},Vector{QQFieldElem}},
-    b_spec::Union{Vector{Int},Vector{QQFieldElem}}, 
-    h::Union{Vector{Int},Vector{QQFieldElem}}; 
-    TropB::Union{TropicalVariety,Nothing}=nothing, 
-    TropL::Union{TropicalLinearSpace,Nothing}=nothing,
-    verbose::Bool=false
-)
-
-Compute a lower bound of the maximal positive root count for an augmented vertically parametrized system given by 
-the matrices `C`, `M` and `L`, given a fixed choice of constant terms `b_spec`, parameters `a_spec` and shift `h` 
-of the tropicalized binomial variety.
-
-# Example
-```jldoctest
-julia> C = matrix(QQ, [1 -1 -1]);
-
-julia> M = matrix(ZZ, [1 0 2; 0 1 1]);
-
-julia> L = matrix(QQ, [1 1]);
-
-julia> F = AugmentedVerticalSystem(C, M, L);
-
-julia> h = [37,97,18];
-
-julia> a = [839, 562, 13];
-
-julia> b = [71];
-
-julia> bound_result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(F, a, b, h);
-
-julia> bound_result.bound
-3
-
-```
-"""
 function lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
     F::AugmentedVerticalSystem,
     a_spec::Union{Vector{<:Integer},Vector{QQFieldElem}},
@@ -295,8 +257,8 @@ end
 @doc raw"""
     lower_bound_of_maximal_positive_steady_state_count(rn::ReactionSystem; kwargs...)
 
-    Computes a lower bound on the maximal number of isolated positive steady states 
-    that a mass action network `rn` can have.
+Computes a lower bound on the maximal number of isolated positive steady states 
+that a mass action network `rn` can have.
 """
 lower_bound_of_maximal_positive_steady_state_count(rn::ReactionSystem; kwargs...) = 
     lower_bound_of_maximal_positive_root_count(steady_state_system(rn); kwargs...)

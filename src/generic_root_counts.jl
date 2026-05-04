@@ -67,11 +67,11 @@ end
 
 
 @doc raw"""
-generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
-    a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
-    b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
-    check_cotransversality::Bool=true, 
-    verbose::Bool=false)
+    generic_root_count(C::QQMatrix, M::ZZMatrix, L::QQMatrix; 
+        a_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing,
+        b_spec::Union{Nothing,Vector{<:Integer},Vector{QQFieldElem}} = nothing, 
+        check_cotransversality::Bool=true, 
+        verbose::Bool=false)
 
 Compute the generic root count of an augmented vertical system `F`.
 
