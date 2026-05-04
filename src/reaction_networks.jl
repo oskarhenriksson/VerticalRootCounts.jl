@@ -9,13 +9,15 @@ of the augmented vertically parametrized steady state system.
 
 # Example
 ```jldoctest
-julia> using Catalyst;
+julia> using Catalyst
+
+julia> using VerticalRootCounts
 
 julia> rn = @reaction_network begin
-    k1, X1 --> X2
-    k2, X2 --> X1
-    k3, 2*X1 + X2 --> 3*X1
-end;
+           k1, X1 --> X2
+           k2, X2 --> X1
+           k3, 2*X1 + X2 --> 3*X1
+       end;
 
 julia> F = steady_state_system(rn);
 
