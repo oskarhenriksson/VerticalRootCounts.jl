@@ -53,13 +53,18 @@ end
 
 
 """
-    multisite_phosphorylation_matrices(k)
+    multisite_phosphorylation_matrices(k::Int)
 
 Compute the coefficient, exponent, and linear part matrices for the k-site phosphorylation network.
-"""
-function multisite_phosphorylation_matrices(k)
 
-    # Ordering of species: E, F, S0, ..., Sm, ES0, ..., ESm-1, FS1, ..., FSm
+Ordering of species (rows of ``M`` and columns of ``L``): ``E, F, S_0, ..., S_k, ES_0, ..., ES_{k-1}, FS_1, ..., F S_k``.
+
+Ordering of the conservation (rows of ``L``): ``s_{\\mathrm{tot}}, e_{\\mathrm{tot}}, f_{\\mathrm{tot}}``
+
+"""
+function multisite_phosphorylation_matrices(k::Int)
+
+    # Ordering of species: E, F, S0, ..., Sk, ES0, ..., ESk-1, FS1, ..., FSk
 
     # Stoichiometric matrix
     e_row = vcat([[-1, 1, 1, 0, 0, 0] for i in 1:k]...) |> transpose
