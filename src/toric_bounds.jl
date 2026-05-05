@@ -339,6 +339,7 @@ function toric_lower_bound_of_maximal_positive_root_count(
     );
 
     target_reached = false
+    TropL = nothing
     
     for b_attempt=1:num_b_attempts
 
@@ -358,9 +359,11 @@ function toric_lower_bound_of_maximal_positive_root_count(
         Lb_spec = evaluate.(Lb, Ref(b_spec))
         
         # Tropical linear space
-        TropL = tropical_linear_space(ideal(Lb_spec*vcat(x,z)))
-        verbose && @info "Tropical linear space computed"
-    
+        if isnothing(TropL)
+            TropL = tropical_linear_space(ideal(Lb_spec*vcat(x,z)))
+            verbose && @info "Tropical linear space computed"
+        end
+        
         # Compute the stable intersection for different h values
         new_result = nothing 
         for h_attempt = 1:num_h_attempts_per_b

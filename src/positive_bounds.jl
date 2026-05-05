@@ -176,6 +176,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
     );
 
     target_reached = false
+    TropL = nothing
 
     for a_b_attempt=1:num_a_b_attempts
 
@@ -206,10 +207,12 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
         Lb_spec = evaluate.(Lb, Ref(b_spec))
     
         # Tropicalize the linear part of the modified system
-        linear_part_matrix = block_diagonal_matrix([Lb_spec, C_min_spec])
-        kernel_matrix = transpose(kernel(linear_part_matrix, side=:right))
-        TropL = tropical_linear_space(kernel_matrix)
-        verbose && @info "Tropical linear space computed"
+        if isnothing(TropL)
+            linear_part_matrix = block_diagonal_matrix([Lb_spec, C_min_spec])
+            kernel_matrix = transpose(kernel(linear_part_matrix, side=:right))
+            TropL = tropical_linear_space(kernel_matrix)
+            verbose && @info "Tropical linear space computed"
+        end
     
         # Compute the stable intersection for different h values
         new_result = nothing
