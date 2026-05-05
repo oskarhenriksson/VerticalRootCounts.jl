@@ -6,18 +6,18 @@ A struct to hold the results of the `perturb_and_intersect_if_transversal` funct
 Fields:
 - `points::Vector{Vector{QQFieldElem}}`: The intersection points if the intersection
 - `multiplicities::Vector{Int}`: The multiplicities of the intersection points
-- `perturbation::Vector{<:Integer}`: The perturbation used for the intersection
+- `perturbation::Vector{<:Union{Integer,RingElem}}`: The perturbation used for the intersection
 - `is_transverse::Bool`: Whether the intersection was transverse
 """
 struct StableIntersectionResult
     points::Vector{Vector{QQFieldElem}}
     multiplicities::Vector{Int}
-    perturbation::Vector{<:Integer}
+    perturbation::Vector{<:Union{Integer,RingElem}}
     is_transverse::Bool
 end
 
 @doc raw"""
-    perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety; perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
+    perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace, TropB::TropicalVariety; perturbation::Vector{<:Union{Integer,RingElem}}=rand(Int16,ambient_dim(TropL)), with_multiplicities::Bool = true)
 
 Perturb `TropB` by `perturbation` and intersect with `TropL` if the intersection is transversal.  Return four things:
 - the vector `perturbation`
@@ -29,7 +29,7 @@ Assumes that `TropL` is a simplicial fan and that `TropB` is the tropicalization
 """
 function perturb_and_intersect_if_transversal(TropL::TropicalLinearSpace,
     TropB::TropicalVariety;
-    perturbation::Vector{<:Integer}=rand(Int16,ambient_dim(TropL)),
+    perturbation::Vector{<:Union{Integer,RingElem}}=rand(Int16,ambient_dim(TropL)),
     with_multiplicities::Bool = true
 )
 
