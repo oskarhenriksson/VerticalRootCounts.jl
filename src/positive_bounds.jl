@@ -220,7 +220,7 @@ function lower_bound_of_maximal_positive_root_count(F::AugmentedVerticalSystem;
             generic_perturbation = false
             while !generic_perturbation
                 try
-                    h = rand(1:max_entry_size, r)
+                    h = rand(-max_entry_size:max_entry_size, r)
                     new_result = lower_bound_of_maximal_positive_root_count_fixed_a_b_h(
                         F, a_spec, b_spec, h; TropB=TropB, TropL=TropL, verbose=verbose
                     )

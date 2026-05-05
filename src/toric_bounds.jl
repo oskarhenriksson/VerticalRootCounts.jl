@@ -370,7 +370,7 @@ function toric_lower_bound_of_maximal_positive_root_count(
             generic_perturbation = false
             while !generic_perturbation
                 try
-                    h = rand(1:max_entry_size, (n+1))
+                    h = rand(-max_entry_size:max_entry_size, (n+1))
                     new_result = toric_lower_bound_of_maximal_positive_root_count_fixed_b_h(
                         A, F, b_spec, h, Trop_toric=Trop_toric, TropL=TropL, verbose=verbose
                     )
