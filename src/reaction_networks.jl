@@ -42,7 +42,7 @@ function steady_state_system(rn::ReactionSystem)
     L = rref(matrix(QQ, conservationlaws(rn)))[2] #conserved quantities
     
     # Compute the matrix C (choose of linearly independent rows of N)
-    first_nonzero_indices = [findfirst(!iszero, row) for row in eachrow(L)]
+    first_nonzero_indices = Int.([findfirst(!iszero, row) for row in eachrow(L)])
     C = N[setdiff(collect(1:nrows(N)), first_nonzero_indices), :] 
 
     return AugmentedVerticalSystem(C, M, L)
